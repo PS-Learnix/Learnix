@@ -38,6 +38,22 @@ services:
     networks:
       - learnix-network
 
+  frontend:
+    profiles: ["frontend"]
+    build:
+      context: ./frontend
+    image: learnix-frontend
+    container_name: LearnixFrontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://backend:8080
+    networks:
+      learnix-network:
+
 networks:
   learnix-network:
     driver: bridge
