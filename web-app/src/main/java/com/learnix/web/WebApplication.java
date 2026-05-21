@@ -1,13 +1,13 @@
-package com.learnix.backend;
+package com.learnix.web;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class BackendApplication {
+public class WebApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(BackendApplication.class, args);
+		SpringApplication.run(WebApplication.class, args);
 	}
 
 }

@@ -3,7 +3,6 @@ name: learnix-application
 services:
 
   postgres:
-    profiles: ["service"]
     image: postgres:16-alpine
     container_name: LearnixDatabase
     environment:
@@ -37,22 +36,6 @@ services:
         condition: service_healthy
     networks:
       - learnix-network
-
-  frontend:
-    profiles: ["frontend"]
-    build:
-      context: ./frontend
-    image: learnix-frontend
-    container_name: LearnixFrontend
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - VITE_API_URL=http://backend:8080
-    networks:
-      learnix-network:
 
 networks:
   learnix-network:
