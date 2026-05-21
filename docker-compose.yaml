@@ -23,7 +23,7 @@ services:
 
   backend:
     profiles: ["backend"]
-    build: ./backend
+    build: web-app
     image: learnix-backend
     container_name: LearnixBackend
     ports:
