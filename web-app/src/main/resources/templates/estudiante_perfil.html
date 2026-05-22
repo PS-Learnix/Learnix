@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil del Estudiante - Learnix</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        .sidebar-panel { background-color: white; border-radius: 2.5rem; width: 100px; height: calc(100vh - 2rem); }
+        .main-panel { background-color: white; border-radius: 2.5rem; height: calc(100vh - 2rem); overflow-y: auto; }
+        .nav-btn { width: 60px; height: 60px; border-radius: 1.2rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; text-decoration: none; }
+        .panel-container { border-radius: 2.5rem; border: 1px solid #f1f5f9; background-color: white; overflow: hidden; height: calc(100vh - 12rem); }
+        .course-btn { background: none; border: none; width: 100%; text-align: left; padding: 0; transition: transform 0.2s; }
+        .course-btn:hover { transform: translateX(6px); }
+        .dot-indicator { width: 10px; height: 10px; display: inline-block; border-radius: 50%; }
+
+        /* Paleta cromática rotativa idéntica a tu array de Svelte */
+        .color-0 { background-color: #6366f1; } .color-1 { background-color: #60a5fa; }
+        .color-2 { background-color: #10b981; } .color-3 { background-color: #fb923c; }
+        .color-4 { background-color: #8b5cf6; }
+    </style>
+</head>
+<body class="bg-light p-3">
+
+<div class="d-flex gap-3">
+    
+
+    <main class="main-panel flex-grow-1 p-4 shadow-sm border bg-white">
+
+        <header class="d-flex align-items-center gap-4 mb-4">
+            <a href="/actividades" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 45px; height: 45px;">←</a>
+
+            <div class="d-flex align-items-center gap-4 bg-white border border-light p-3 px-5 rounded-5 shadow-sm">
+                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-center fs-3" style="width: 65px; height: 65px;">👤</div>
+                <div>
+                    <div class="d-flex align-items-baseline gap-3">
+                        <h3 class="fw-black text-dark m-0" th:text="${student.firstName} + ' ' + ${student.lastName}">Estudiante</h3>
+                        <span class="text-muted small border-bottom fw-bold" th:text="'DNI: ' + ${student.dni}">DNI</span>
+                    </div>
+                    <p class="text-muted small m-0 mt-1" th:text="'🎂 Fecha de Cumpleaños: ' + (${student.birthDate} ?: 'No registrada')"></p>
+                </div>
+            </div>
+        </header>
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="panel-container p-4 shadow-sm overflow-auto">
+                    <h6 class="text-muted fw-bold text-uppercase tracking-wider small mb-4">Cursos Actuales</h6>
+
+                    <div class="d-flex flex-column gap-4">
+                        <button th:each="curso, iter : ${cursos}"
+                                class="course-btn"
+                                th:attr="hx-get=@{/perfil/curso-detalle(idCoursePeriod=${curso.idCoursePeriod},courseName=${curso.courseName})}"
+                                hx-target="#right-panel-container"
+                                hx-swap="innerHTML">
+
+                            <div class="d-flex justify-content-between align-items-end mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="dot-indicator" th:classappend="'color-' + ${iter.index % 5}"></span>
+                                    <span class="fw-bold text-secondary small" th:text="${curso.courseName}">Materia</span>
+                                </div>
+                                <span class="small fw-black text-primary font-monospace" th:text="${curso.getNotaBaseVente()}">0</span>
+                            </div>
+                            <div class="progress rounded-pill" style="height: 6px;">
+                                <div class="progress-bar" th:classappend="'color-' + ${iter.index % 5}" role="progressbar"
+                                     th:style="'width: ' + ${curso.getPercentageWidth()} + '%'"></div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="panel-container shadow-sm p-5 d-flex align-items-center justify-content-center text-center bg-light bg-opacity-25" id="right-panel-container">
+
+                    <div th:fragment="right-panel-detail" class="w-100 h-100 d-flex flex-column align-items-start justify-content-start text-start">
+
+                        <div th:if="${courseName != null}" class="w-100">
+                            <h4 class="fw-black text-dark mb-4" th:text="${courseName}">Curso Seleccionado</h4>
+                            <div class="alert alert-light border text-muted py-5 text-center rounded-4 shadow-inner italic">
+                                📄 Aquí aparecería el listado de calificaciones detalladas para esta materia...
+                            </div>
+                        </div>
+
+                        <div th:unless="${courseName != null}" class="m-auto text-muted">
+                            <div class="display-3 mb-2">📄</div>
+                            <p class="fw-bold m-0">Selecciona un curso para ver sus tareas</p>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script th:src="@{/js/htmx.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
