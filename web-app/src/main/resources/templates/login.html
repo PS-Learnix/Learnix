@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Learnix</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        .bg-gradient-custom {
+            background: linear-gradient(135deg, #a7f3d0 0%, #34d399 50%, #059669 100%);
+        }
+        .bg-sidebar-image {
+            background-image: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
+</head>
+<body class="bg-gradient-custom min-vh-100 d-flex align-items-center justify-content-center p-4">
+
+<div class="card shadow-lg border-0 rounded-4 overflow-hidden w-100"
+     style="max-width: 900px;">
+    <div class="row g-0">
+
+        <div class="col-md-6 p-5 bg-white">
+            <h1 class="fw-bold mb-4 text-dark">Welcome Back !!</h1>
+
+            <!-- Contenedor del Fragmento que HTMX va a reemplazar si hay errores -->
+            <form id="loginForm"
+                  th:fragment="login-form"
+                  th:action="@{/login}"
+                  method="POST"
+                  th:object="${loginRequest}"
+                  hx-post="/login"
+                  hx-target="#loginForm"
+                  hx-swap="outerHTML">
+
+                <!-- Indicador de carga nativo de HTMX -->
+                <div class="htmx-indicator alert alert-info py-2 mb-3"
+                     id="loading-indicator">
+                    <span class="spinner-border spinner-border-sm me-2"
+                          role="status"></span>
+                    Cargando...
+                </div>
+
+                <!-- Mensajes de Error Globales -->
+                <div th:if="${globalError}"
+                     class="alert alert-danger py-2 border border-danger-subtle rounded-3 text-sm mb-3"
+                     role="alert">
+                    <span th:text="${globalError}">Error del servidor</span>
+                </div>
+
+                <!-- Campo Email -->
+                <div class="mb-3">
+                    <label for="email"
+                           class="form-label small fw-medium">
+                        Email:
+                    </label>
+                    <input type="email"
+                           th:field="*{email}"
+                           id="email"
+                           class="form-control p-3"
+                           th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''" />
+                    <div class="invalid-feedback"
+                         th:if="${#fields.hasErrors('email')}"
+                         th:errors="*{email}">
+                        Error de email
+                    </div>
+                </div>
+
+                <!-- Campo Password -->
+                <div class="mb-3">
+                    <label for="password"
+                           class="form-label small fw-medium">
+                        Password:
+                    </label>
+                    <input type="password"
+                           th:field="*{password}"
+                           id="password"
+                           class="form-control p-3"
+                           th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''" />
+                    <div class="invalid-feedback"
+                         th:if="${#fields.hasErrors('password')}"
+                         th:errors="*{password}">
+                        Error de contraseña
+                    </div>
+                </div>
+
+                <!-- Recordarme y Olvido de Contraseña -->
+                <div class="d-flex align-items-center justify-content-between mb-4 small">
+                    <div class="form-check">
+                        <input type="checkbox"
+                               th:field="*{rememberMe}"
+                               id="rememberMe"
+                               class="form-check-input" />
+                        <label class="form-check-label text-secondary"
+                               for="rememberMe">
+                            Remember me
+                        </label>
+                    </div>
+                    <a href="/forgot"
+                       class="text-success text-decoration-none hover-underline">
+                        Forgot your password?
+                    </a>
+                </div>
+
+                <!-- Botón de Envío -->
+                <button type="submit"
+                        class="btn btn-success w-100 p-3 fw-bold rounded-3 d-flex justify-content-center align-items-center gap-2">
+                    Log In →
+                </button>
+            </form>
+        </div>
+
+        <!-- Columna de la Imagen (Derecha - Oculta en móviles) -->
+        <div class="col-md-6 d-none d-md-block bg-dark p-4">
+            <div class="h-100 w-100 bg-sidebar-image rounded-3 opacity-75"></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Tus scripts locales en la carpeta static -->
+<script th:src="@{/js/htmx.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
