@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistencia - Learnix</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        .sidebar-panel { background-color: white; border-radius: 2.5rem; width: 100px; height: calc(100vh - 2rem); }
+        .main-panel { background-color: white; border-radius: 2.5rem; height: calc(100vh - 2rem); overflow-y: auto; }
+        .nav-btn { width: 60px; height: 60px; border-radius: 1.2rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; text-decoration: none; }
+        .table-responsive-panel { border-radius: 2rem; overflow: hidden; border: 2px solid #f1f5f9; }
+        .sticky-col { position: sticky; left: 0; background-color: white; z-index: 10; border-r: 2px solid #f1f5f9; }
+    </style>
+</head>
+<body class="bg-light p-3">
+
+<div class="d-flex gap-3">
+    <aside class="sidebar-panel d-flex flex-column align-items-center py-4 justify-content-between shadow-sm">
+        <div class="d-flex flex-column gap-3 width-full align-items-center">
+            <a href="/dashboard" class="nav-btn bg-light text-secondary" title="Inicio">🏠</a>
+            <a href="/asistencia" class="nav-btn bg-primary text-white" title="Asistencia">📅</a>
+            <a href="/actividades" class="nav-btn bg-light text-secondary" title="Actividades">📝</a>
+        </div>
+        <div class="d-flex flex-column gap-4 align-items-center">
+            <a href="/logout" class="text-secondary fs-3 text-decoration-none">🚪</a>
+            <div class="rounded-circle border border-2 overflow-hidden" style="width: 48px; height: 48px;">
+                <img th:src="'https://ui-avatars.com/api/?name=' + ${user.firstName} + '+' + ${user.lastName} + '&background=DBEAFE&color=1E40AF'" class="w-100 h-100">
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-panel flex-grow-1 p-4 shadow-sm border bg-white">
+        <header class="d-flex align-items-center gap-3 mb-4">
+            <a href="/dashboard" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">←</a>
+            <h2 class="fw-black text-dark m-0" th:text="'Asistencia - ' + ${selectedCourse.name} + ' (' + ${selectedCourse.section} + ')'">Asistencia</h2>
+        </header>
+
+        <div class="table-responsive-panel bg-white shadow-sm">
+            <table class="table table-bordered m-0 align-middle text-center" style="border-collapse: separate; border-spacing: 0;">
+                <thead class="table-light text-secondary">
+                <tr>
+                    <th class="sticky-col p-3 text-start bg-light" style="width: 25%;">Estudiante</th>
+                    <th th:each="dia : ${diasSemana}" class="p-2" th:classappend="${dia.isToday} ? 'opacity-100' : 'opacity-50'">
+                        <div class="small fw-bold text-uppercase tracking-wider" th:text="${dia.name}">Lunes</div>
+                        <div class="fs-4 fw-black text-dark" th:text="${#temporals.format(dia.date, 'dd')}">27</div>
+                    </th>
+                </tr>
+                </thead>
+                <tbody class="divide-y-2">
+                <tr th:each="row : ${matrixRows}" class="hover-actions">
+
+                    <td class="sticky-col p-3 text-start fw-bold text-secondary"
+                        th:text="${row.lastName} + ' ' + ${row.firstName}">Alumno</td>
+
+                    <td th:each="dia, diaStat : ${diasSemana}" class="p-2" th:classappend="${dia.isToday} ? 'bg-primary bg-opacity-10'">
+
+                        <form th:fragment="attendance-btn"
+                              hx-post="/asistencia/toggle"
+                              hx-trigger="submit"
+                              hx-swap="outerHTML"
+                              class="d-inline">
+
+                            <input type="hidden" name="idStudent" th:value="${row != null} ? ${row.idStudent} : ${idStudent}" />
+                            <input type="hidden" name="idCoursePeriod" th:value="${selectedCourse != null} ? ${selectedCourse.idCoursePeriod} : ${idCoursePeriod}" />
+                            <input type="hidden" name="date" th:value="${dia != null} ? ${dia.date} : ${date}" />
+
+                            <th:block th:with="currentState=${row != null} ? ${row.states[diaStat.index]} : 'null'">
+
+                                <button type="submit"
+                                        name="currentState"
+                                        th:value="${newState != null} ? ${newState} : ${currentState}"
+                                        class="btn rounded-3 fw-bold transition-all border-2 d-inline-flex align-items-center justify-content-center"
+                                        style="width: 36px; height: 36px;"
+                                        th:classappend="${newState != null} ?
+                                                (${newState == 'true'} ? 'bg-success border-success text-white' : (${newState == 'false'} ? 'bg-danger border-danger text-white' : 'bg-white border-secondary text-muted')) :
+                                                (${currentState == 'true'} ? 'bg-success border-success text-white' : (${currentState == 'false'} ? 'bg-danger border-danger text-white' : 'bg-white border-secondary text-muted'))">
+
+                                        <span th:with="actualState=${newState != null ? newState : currentState}"
+                                              th:text="${actualState == 'true'} ? '✓' : (${actualState == 'false'} ? '✕' : '')">
+                                        </span>
+                                </button>
+
+                            </th:block>
+                        </form>
+
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<script th:src="@{/js/htmx.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
