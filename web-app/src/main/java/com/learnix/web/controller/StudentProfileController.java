@@ -1,8 +1,8 @@
 package com.learnix.web.controller;
 
-import com.learnix.web.dto.StudentDetailResponse;
-import com.learnix.web.dto.StudentProfileCourseDto;
-import com.learnix.web.dto.UserResponse;
+import com.learnix.web.dto.*;
+import com.learnix.web.service.DashboardService;
+import com.learnix.web.service.ReportService;
 import com.learnix.web.service.StudentProfileService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -21,6 +21,8 @@ import java.util.List;
 public class StudentProfileController {
 
     private final StudentProfileService studentProfileService;
+    private final ReportService reportService;
+    private final DashboardService dashboardService;
 
     @GetMapping("/perfil/{idStudent}")
     public String showStudentProfile(@PathVariable("idStudent") Integer idStudent, HttpSession session, Model model) {
@@ -72,5 +74,30 @@ public class StudentProfileController {
 
         // Retornamos únicamente el fragmento que envuelve el listado de comentarios
         return "estudiante_perfil :: observations-timeline";
+    }
+    @GetMapping("/perfil/{idStudent}/reporte")
+    public String generateStudentReport(
+            @PathVariable("idStudent") Integer idStudent,
+            @RequestParam("idCoursePeriod") Integer idCoursePeriod,
+            HttpSession session, Model model) {
+
+        UserResponse user = (UserResponse) session.getAttribute("user");
+        if (user == null) return "redirect:/login";
+
+        // Cargamos los datos básicos de la boleta
+        StudentDetailResponse student = studentProfileService.getStudentDetailSp(idStudent);
+        List<ReportCardItem> grades = reportService.getStudentReportCardSp(idStudent, idCoursePeriod);
+
+        // Obtenemos los cursos generales para extraer el nombre de la materia actual
+        List<CourseDashboardResponse> teacherCourses = dashboardService.getTeacherCoursesSp(user.idUser());
+        CourseDashboardResponse currentCourse = teacherCourses.stream()
+                .filter(c -> c.idCoursePeriod().equals(idCoursePeriod)).findFirst().orElse(null);
+
+        model.addAttribute("student", student);
+        model.addAttribute("reportItems", grades);
+        model.addAttribute("course", currentCourse);
+        model.addAttribute("teacher", user);
+
+        return "reporte_imprimible"; // Nueva plantilla limpia
     }
 }

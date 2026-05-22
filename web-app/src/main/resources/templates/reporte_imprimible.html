@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Rendimiento - Learnix</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        body { background: white; font-size: 14px; color: #333; }
+        .report-header { border-bottom: 3px double #1E40AF; padding-bottom: 1.5rem; margin-bottom: 2rem; }
+        .school-title { color: #1E40AF; font-weight: 900; letter-spacing: -0.5px; }
+
+        /* Forzar estilos limpios al momento de imprimir a PDF */
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; margin: 0; }
+            .card { border: none !important; }
+            @page { size: auto; margin: 15mm; }
+        }
+    </style>
+</head>
+<body class="p-5">
+
+<div class="container text-end mb-4 no-print">
+    <button onclick="window.print();" class="btn btn-primary fw-bold px-4 rounded-3 shadow">
+        🖨️ Guardar como PDF / Imprimir
+    </button>
+</div>
+
+<div class="container border p-5 rounded-4 bg-white shadow-sm" style="max-width: 800px;">
+
+    <div class="report-header d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="school-title m-0">LEARNIX ACADEMY</h2>
+            <small class="text-muted fw-bold uppercase tracking-wider">Reporte de Rendimiento para Padres de Familia</small>
+        </div>
+        <div class="text-end text-muted font-monospace small">
+            Generado: <span th:text="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}">2026-05-22</span>
+        </div>
+    </div>
+
+    <div class="card bg-light border-0 p-3 rounded-3 mb-4">
+        <div class="row g-3">
+            <div class="col-6">
+                <strong class="text-secondary small uppercase">Estudiante:</strong>
+                <p class="m-0 fw-bold text-dark fs-5" th:text="${student.lastName} + ' ' + ${student.firstName}">Alumno</p>
+            </div>
+            <div class="col-6">
+                <strong class="text-secondary small uppercase">Materia / Aula:</strong>
+                <p class="m-0 fw-bold text-dark fs-5" th:text="${course.name} + ' (' + ${course.section} + ')'">Curso</p>
+            </div>
+            <div class="col-6">
+                <strong class="text-secondary small uppercase">Documento de Identidad:</strong>
+                <p class="m-0 font-monospace text-secondary" th:text="${student.dni}">DNI</p>
+            </div>
+            <div class="col-6">
+                <strong class="text-secondary small uppercase">Docente Responsable:</strong>
+                <p class="m-0 text-secondary" th:text="${teacher.firstName} + ' ' + ${teacher.lastName}">Profesor</p>
+            </div>
+        </div>
+    </div>
+
+    <h5 class="fw-bold text-dark mb-3">Detalle de Evaluaciones Colectadas</h5>
+    <table class="table table-striped table-bordered align-middle">
+        <thead class="table-primary border-primary text-white">
+        <tr>
+            <th style="width: 60%;" class="p-3">Actividad Académica</th>
+            <th style="width: 20%;" class="p-3 text-center">Peso (%)</th>
+            <th style="width: 20%;" class="p-3 text-center">Calificación Obtenida</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${reportItems}">
+            <td class="p-3 fw-bold text-secondary" th:text="${item.activityName}">Examen Parcial</td>
+            <td class="p-3 text-center font-monospace" th:text="${item.activityWeight} + '%'">20%</td>
+            <td class="p-3 text-center fw-black fs-5"
+                th:text="${item.gradeValue}"
+                th:classappend="${item.gradeValue == 'AD' || item.gradeValue == 'A'} ? 'text-success' : (${item.gradeValue == 'B' || item.gradeValue == 'C'} ? 'text-danger' : 'text-muted')">AD</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="row mt-5 pt-5 text-center justify-content-center">
+        <div class="col-5">
+            <div class="border-top border-dark pt-2 small fw-bold text-secondary" th:text="${teacher.firstName} + ' ' + ${teacher.lastName}">Firma Docente</div>
+            <div class="text-muted" style="font-size: 11px;">Docente del Curso</div>
+        </div>
+        <div class="col-2"></div>
+        <div class="col-5">
+            <div class="border-top border-dark pt-2 small fw-bold text-secondary">Control de Dirección</div>
+            <div class="text-muted" style="font-size: 11px;">Sello Institucional</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Al terminar de cargar los elementos gráficos, abre el cuadro de guardado como PDF en caliente
+    window.onload = function() {
+        window.print();
+    };
+</script>
+</body>
+</html>

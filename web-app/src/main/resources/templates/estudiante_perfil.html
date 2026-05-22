@@ -54,12 +54,17 @@
                                 hx-target="#right-panel-container"
                                 hx-swap="innerHTML">
 
-                            <div class="d-flex justify-content-between align-items-end mb-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="dot-indicator" th:classappend="'color-' + ${iter.index % 5}"></span>
                                     <span class="fw-bold text-secondary small" th:text="${curso.courseName}">Materia</span>
                                 </div>
-                                <span class="small fw-black text-primary font-monospace" th:text="${curso.getNotaBaseVente()}">0</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="small fw-black text-primary font-monospace" th:text="${curso.getNotaBaseVente()}">0</span>
+                                    <a th:href="@{/perfil/{idStudent}/reporte(idStudent=${student.idStudent}, idCoursePeriod=${curso.idCoursePeriod})}"
+                                       target="_blank"
+                                       class="text-decoration-none btn-link small p-0" title="Generar Reporte para Padres">📄⬇️</a>
+                                </div>
                             </div>
                             <div class="progress rounded-pill" style="height: 6px;">
                                 <div class="progress-bar" th:classappend="'color-' + ${iter.index % 5}" role="progressbar"
@@ -103,7 +108,7 @@
 
                             <div th:each="obs : ${observaciones}" class="p-3 bg-light rounded-4 border-start border-4 border-primary position-relative">
                                 <div class="d-flex justify-content-between align-items-baseline mb-1">
-                                    <span class="small fw-bold text-dark" th:text="${obs.teacherName}">Nombre Docente</span>
+                                    <span class="small fw-bold text-dark" th:text="'Docente: '+ ${obs.teacherName}">Nombre Docente</span>
                                     <span class="font-monospace text-muted" style="font-size: 10px;"
                                           th:text="${#temporals.format(obs.createdAt, 'yyyy-MM-dd HH:mm')}">Fecha</span>
                                 </div>
