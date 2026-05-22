@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Actividad - Learnix</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        .main-panel { background-color: white; border-radius: 2.5rem; min-height: calc(100vh - 2rem); }
+        .panel-container { border-radius: 2rem; border: 1px solid #f1f5f9; background-color: white; overflow: hidden; }
+        .podium-bar { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; position: relative; width: 50px; }
+    </style>
+</head>
+<body class="bg-light p-3">
+
+<main class="main-panel container-fluid p-4 shadow-sm border bg-white">
+
+    <header class="d-flex align-items-center gap-3 mb-4">
+        <a href="/actividades" class="btn btn-light rounded-circle fs-4 p-0 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">⬅️</a>
+        <h2 class="fw-black text-dark m-0" th:text="${actividad.courseName} + ' - ' + ${actividad.activityName}">Curso - Tarea</h2>
+    </header>
+
+    <div class="row g-4">
+        <div class="col-lg-9">
+            <div class="panel-container shadow-sm">
+                <table class="table align-middle m-0 text-left">
+                    <thead class="table-light text-secondary fw-bold">
+                    <tr>
+                        <th class="p-4">Estudiante</th>
+                        <th class="p-4">Nota</th>
+                        <th class="p-4">Estado</th>
+                        <th class="p-4 text-center">Acción</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                    <tr th:each="item : ${listaNotas}" th:id="'row-student-' + ${item.idStudent}">
+
+                        <th:block th:fragment="grade-row">
+                            <td class="p-4 fw-bold text-secondary" th:text="${item.lastName} + ' ' + ${item.firstName}">Alumno</td>
+                            <td class="p-4 fs-4 fw-black text-dark font-monospace" th:text="${item.gradeValue} ?: '-'">-</td>
+                            <td class="p-4">
+                <span th:if="${item.gradeValue != null}"
+                      th:text="${item.isApproved()} ? 'Aprobado ✓' : 'Desaprobado ✕'"
+                      class="badge rounded-pill px-3 py-1 fw-bold text-xs border"
+                      th:classappend="${item.isApproved()} ? 'bg-success bg-opacity-10 text-success border-success-subtle' : 'bg-danger bg-opacity-10 text-danger border-danger-subtle'">Estado</span>
+                                <span th:unless="${item.gradeValue != null}" class="text-muted small italic">Sin calificar</span>
+                            </td>
+                            <td class="p-4 text-center">
+                                <button class="btn btn-outline-primary btn-sm rounded-3 px-3 fw-bold"
+                                        data-bs-toggle="modal" data-bs-target="#gradeModal"
+                                        th:attr="data-id=${item.idStudent}, data-firstname=${item.firstName}, data-lastname=${item.lastName}, data-grade=${item.gradeValue}">
+                                    📝 Calificar
+                                </button>
+                            </td>
+                        </th:block>
+
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <aside class="col-lg-3 d-flex flex-column gap-4"
+               id="stats-panel"
+               th:fragment="stats-aside"
+               th:attr="hx-get=@{/actividades/{id}/stats(id=${stats != null && actividad == null} ? ${idActivity} : ${actividad.idActivity})}"
+               hx-trigger="refreshStatsEvent from:body"
+               hx-swap="outerHTML">
+
+            <div class="panel-container p-4 text-center shadow-sm">
+                <h6 class="fw-bold mb-4">Ranking</h6>
+                <div class="d-flex align-items-end justify-content-center gap-2" style="height: 120px;">
+                    <div class="podium-bar bg-warning bg-opacity-70 h-50"><span class="position-absolute top-0 start-50 translate-middle-x mt-n4 fs-4">🥈</span></div>
+                    <div class="podium-bar bg-success bg-opacity-70 h-75"><span class="position-absolute top-0 start-50 translate-middle-x mt-n4 fs-4">🥇</span></div>
+                    <div class="podium-bar bg-danger bg-opacity-70 h-25"><span class="position-absolute top-0 start-50 translate-middle-x mt-n4 fs-4">🥉</span></div>
+                </div>
+            </div>
+
+            <div class="panel-container p-4 shadow-sm text-center">
+                <h6 class="fw-bold mb-2">Estudiantes</h6>
+                <h2 class="display-4 fw-black text-dark mb-3" th:text="${stats.totalStudents}">0</h2>
+
+                <div class="progress rounded-pill mb-2" style="height: 16px;">
+                    <div class="progress-bar bg-success" role="progressbar" th:style="'width: ' + ${stats.getApprovedPercentage()} + '%'"></div>
+                    <div class="progress-bar bg-danger" role="progressbar" th:style="'width: ' + ${stats.getDisapprovedPercentage()} + '%'"></div>
+                </div>
+
+                <div class="d-flex justify-content-between small fw-bold text-uppercase" style="font-size: 10px;">
+                    <span class="text-success" th:text="${stats.approvedCount} + ' aprobados'">0 aprobados</span>
+                    <span class="text-danger" th:text="${stats.disapprovedCount} + ' desaprobados'">0 desaprobados</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<div class="modal fade" id="gradeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-3 rounded-5 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-black text-dark">Calificar Estudiante</h5>
+                    <p class="text-muted small m-0" id="modal-student-name">Nombre Alumno</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" id="close-grade-modal"></button>
+            </div>
+            <div class="modal-body">
+                <form hx-post="/actividades/guardar-nota" hx-swap="innerHTML" class="d-flex flex-column gap-4">
+
+                    <input type="hidden" name="idStudent" id="input-student-id">
+                    <input type="hidden" name="idActivity" th:value="${actividad.idActivity}">
+                    <input type="hidden" name="firstName" id="input-first-name">
+                    <input type="hidden" name="lastName" id="input-last-name">
+
+                    <div class="row g-2 text-center">
+                        <div th:each="nota : ${#strings.arraySplit('AD,A,B,C', ',')}" class="col-6">
+                            <label class="w-100 cursor-pointer">
+                                <input type="radio" name="value" th:value="${nota}" class="btn-check" th:id="'radio-' + ${nota}" required />
+                                <div class="btn btn-outline-primary w-100 p-3 rounded-4 fw-bold text-uppercase fs-5" th:text="${nota}">AD</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light py-3 flex-grow-1 rounded-3 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary py-3 flex-grow-2 rounded-3 fw-bold shadow">Guardar Nota</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/htmx.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script>
+    // Lógica nativa de Bootstrap para configurar dinámicamente los datos en el modal antes de abrirlo
+    var gradeModal = document.getElementById('gradeModal');
+    gradeModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+
+        // Extraemos la metadata inyectada en el botón de la fila
+        var idStudent = button.getAttribute('data-id');
+        var firstName = button.getAttribute('data-firstname');
+        var lastName = button.getAttribute('data-lastname');
+        var currentGrade = button.getAttribute('data-grade');
+
+        // Seteamos las etiquetas y campos ocultos del modal
+        document.getElementById('modal-student-name').textContent = lastName + ' ' + firstName;
+        document.getElementById('input-student-id').value = idStudent;
+        document.getElementById('input-first-name').value = firstName;
+        document.getElementById('input-last-name').value = lastName;
+
+        // Configuramos la query de destino dinámico en HTMX para que sepa exactamente qué fila (`<tr>`) pisar
+        var form = gradeModal.querySelector('form');
+        form.setAttribute('hx-target', '#row-student-' + idStudent);
+        htmx.process(form); // Re-procesamos el elemento para que HTMX registre la nueva ruta de target
+
+        // Desmarcar todos los radios e iluminar la nota actual si existe
+        var radios = form.querySelectorAll('input[type="radio"]');
+        radios.forEach(r => r.checked = false);
+        if (currentGrade) {
+            var targetRadio = document.getElementById('radio-' + currentGrade);
+            if (targetRadio) targetRadio.checked = true;
+        }
+    });
+
+    // Escuchamos el evento de envío exitoso de HTMX para cerrar el modal de forma limpia
+    document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+        if (evt.detail.xhr.status === 200 && evt.detail.requestConfig.path === '/actividades/guardar-nota') {
+            var modal = bootstrap.Modal.getInstance(gradeModal);
+            if (modal) modal.hide();
+        }
+    });
+</script>
+</body>
+</html>

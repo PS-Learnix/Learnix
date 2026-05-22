@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actividades - Learnix</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        .sidebar-panel { background-color: white; border-radius: 2.5rem; width: 100px; height: calc(100vh - 2rem); }
+        .main-panel { background-color: white; border-radius: 2.5rem; height: calc(100vh - 2rem); overflow-y: auto; }
+        .nav-btn { width: 60px; height: 60px; border-radius: 1.2rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; text-decoration: none; }
+        .panel-container { border-radius: 2rem; border: 1px solid #f1f5f9; background-color: white; }
+    </style>
+</head>
+<body class="bg-light p-3">
+
+<div class="d-flex gap-3">
+    <aside class="sidebar-panel d-flex flex-column align-items-center py-4 justify-content-between shadow-sm">
+        <div class="d-flex flex-column gap-3 align-items-center">
+            <a href="/dashboard" class="nav-btn bg-light text-secondary">🏠</a>
+            <a href="/asistencia" class="nav-btn bg-light text-secondary">📅</a>
+            <a href="/actividades" class="nav-btn bg-primary text-white">📝</a>
+        </div>
+        <div class="d-flex flex-column gap-4 align-items-center">
+            <a href="/logout" class="text-secondary fs-3 text-decoration-none">🚪</a>
+            <div class="rounded-circle border border-2 overflow-hidden" style="width: 48px; height: 48px;">
+                <img th:src="'https://ui-avatars.com/api/?name=' + ${user.firstName} + '+' + ${user.lastName} + '&background=DBEAFE&color=1E40AF'" class="w-100 h-100">
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-panel flex-grow-1 p-4 shadow-sm border bg-white">
+        <div class="mb-4">
+            <h2 class="fw-black text-dark m-0" th:text="${selectedCourse.name} + ' — ' + ${selectedCourse.section}">Curso</h2>
+            <small class="text-muted fw-bold text-uppercase">1er Trimestre</small>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-9 flex-column d-flex gap-3">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-white shadow-sm border-light rounded-circle fs-5"
+                            data-bs-toggle="modal" data-bs-target="#activityModal" style="width: 45px; height: 45px;">➕</button>
+                    <button class="btn btn-white shadow-sm border-light rounded-circle fs-5" style="width: 45px; height: 45px;">🔍</button>
+                </div>
+
+                <div class="panel-container shadow-sm overflow-hidden">
+                    <table class="table table-hover align-middle m-0">
+                        <thead class="table-light text-secondary fw-bold">
+                        <tr>
+                            <th class="p-4">Actividad</th>
+                            <th class="p-4">Creación</th>
+                            <th class="p-4">Peso de Evaluación</th>
+                            <th class="p-4">Estado</th>
+                            <th class="p-4 text-center">Acción</th>
+                        </tr>
+                        </thead>
+                        <tbody id="activities-list-body" th:fragment="activities-table">
+                        <tr th:each="act : ${actividades}">
+                            <td class="p-4">
+                                <a th:href="@{/actividades/{id}(id=${act.idActivity})}" class="text-primary fw-bold text-decoration-none" th:text="${act.name}">Tarea</a>
+                            </td>
+                            <td class="p-4 text-secondary" th:text="${#temporals.format(act.createdAt, 'yyyy-MM-dd')}">2026-05-22</td>
+                            <td class="p-4 fw-medium" th:text="${act.weight} + '%'">20%</td>
+                            <td class="p-4">
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold text-xs">Evaluado ✓</span>
+                            </td>
+                            <td class="p-4 text-center">
+                                <a th:href="@{/actividades/{id}(id=${act.idActivity})}" class="text-secondary text-decoration-none me-2">📝</a>
+                                <span class="text-muted cursor-pointer">•••</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(actividades)}">
+                            <td colspan="5" class="text-center py-5 text-muted italic small">No hay actividades registradas en este curso.</td>
+                            end;
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-lg-3 d-flex flex-column gap-3">
+                <div class="bg-primary text-white p-3 rounded-4 shadow d-flex flex-column gap-2">
+                    <div class="bg-white bg-opacity-25 py-2 text-center rounded-3 fw-bold small">🎓 1er Trimestre</div>
+                    <div class="text-white text-opacity-70 py-2 text-center small cursor-pointer hover-bg-white-10 rounded-3">🎓 2do Trimestre</div>
+                </div>
+
+                <div class="panel-container p-3 flex-grow-1 shadow-sm">
+                    <h6 class="fw-bold text-center border-b pb-2 mb-3">Lista de Estudiantes</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <a th:each="est : ${estudiantes}" th:href="@{/perfil/{id}(id=${est.idStudent})}" class="d-flex justify-content-between align-items-center p-2 rounded-3 text-decoration-none text-dark list-group-item-action transition-all">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center text-center shadow-sm" style="width: 36px; height: 36px;">👤</div>
+                                <div>
+                                    <p class="m-0 small fw-bold text-secondary" th:text="${est.firstName} + ' ' + ${est.lastName}">Alumno</p>
+                                    <p class="m-0 font-monospace text-muted" style="font-size: 9px;" th:text="'DNI: ' + ${est.dni}">DNI</p>
+                                </div>
+                            </div>
+                            <span class="text-muted small">→</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal fade" id="activityModal" static-backdrop tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-3 rounded-5 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-black text-dark">Nueva Actividad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="btn-close-modal"></button>
+            </div>
+            <div class="modal-body">
+                <form hx-post="/actividades/crear"
+                      hx-target="#activities-list-body"
+                      hx-swap="outerHTML"
+                      class="d-flex flex-column gap-3">
+
+                    <input type="hidden" name="idCoursePeriod" th:value="${selectedCourse.idCoursePeriod}">
+
+                    <div class="d-flex flex-column gap-1">
+                        <label class="small fw-bold text-muted text-uppercase tracking-wider">Nombre de la actividad</label>
+                        <input type="text" name="name" placeholder="Ej: Examen Parcial" class="form-control p-3 rounded-3" required />
+                    </div>
+
+                    <div class="d-flex flex-column gap-1">
+                        <label class="small fw-bold text-muted text-uppercase tracking-wider">Peso (%)</label>
+                        <input type="number" name="weight" min="1" max="100" placeholder="20" class="form-control p-3 rounded-3" required />
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="button" class="btn btn-light py-3 flex-grow-1 rounded-3 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary py-3 flex-grow-2 rounded-3 fw-bold shadow">Crear Actividad</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/htmx.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script>
+    // Escuchamos la cabecera 'HX-Trigger' enviada por Spring para limpiar campos y ocultar el modal
+    document.body.addEventListener('closeModalEvent', function() {
+        var modalElement = document.getElementById('activityModal');
+        var modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+            modalInstance.hide(); // Oculta el modal de Bootstrap de forma limpia
+        }
+        // Limpia los campos del formulario de manera nativa
+        modalElement.querySelector('form').reset();
+    });
+</script>
+</body>
+</html>
