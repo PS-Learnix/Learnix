@@ -23,7 +23,7 @@
 <body class="bg-light p-3">
 
 <div class="d-flex gap-3">
-    
+
 
     <main class="main-panel flex-grow-1 p-4 shadow-sm border bg-white">
 
@@ -71,22 +71,51 @@
             </div>
 
             <div class="col-lg-8">
-                <div class="panel-container shadow-sm p-5 d-flex align-items-center justify-content-center text-center bg-light bg-opacity-25" id="right-panel-container">
+                <div class="panel-container shadow-sm p-4 d-flex flex-column gap-4 bg-white">
 
-                    <div th:fragment="right-panel-detail" class="w-100 h-100 d-flex flex-column align-items-start justify-content-start text-start">
+                    <div class="border-bottom pb-2">
+                        <h4 class="fw-black text-dark m-0">Seguimiento Académico</h4>
+                        <small class="text-muted fw-bold text-uppercase">Avances y Dificultades </small>
+                    </div>
 
-                        <div th:if="${courseName != null}" class="w-100">
-                            <h4 class="fw-black text-dark mb-4" th:text="${courseName}">Curso Seleccionado</h4>
-                            <div class="alert alert-light border text-muted py-5 text-center rounded-4 shadow-inner italic">
-                                📄 Aquí aparecería el listado de calificaciones detalladas para esta materia...
+                    <form th:hx-post="@{/perfil/{id}/observacion(id=${student.idStudent})}"
+                          hx-target="#comments-list-wrapper"
+                          hx-swap="outerHTML"
+                          class="d-flex flex-column gap-2 bg-light p-3 rounded-4">
+
+                        <label class="small fw-bold text-secondary text-uppercase tracking-wide ms-1">Registrar nueva observación u observación de desempeño</label>
+                        <textarea name="comment"
+                                  id="textarea-observation"
+                                  rows="2"
+                                  class="form-control rounded-3 border-0 shadow-inner"
+                                  placeholder="Ej: Muestra dificultades para resolver ecuaciones de segundo grado. Se sugiere reforzamiento en casa."
+                                  required></textarea>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary fw-bold px-4 rounded-3 shadow-sm btn-sm">
+                                💾 Guardar Comentario
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="flex-grow-1 overflow-auto pe-2" id="comments-list-wrapper" th:fragment="observations-timeline">
+                        <div class="d-flex flex-column gap-3">
+
+                            <div th:each="obs : ${observaciones}" class="p-3 bg-light rounded-4 border-start border-4 border-primary position-relative">
+                                <div class="d-flex justify-content-between align-items-baseline mb-1">
+                                    <span class="small fw-bold text-dark" th:text="${obs.teacherName}">Nombre Docente</span>
+                                    <span class="font-monospace text-muted" style="font-size: 10px;"
+                                          th:text="${#temporals.format(obs.createdAt, 'yyyy-MM-dd HH:mm')}">Fecha</span>
+                                </div>
+                                <p class="m-0 text-secondary small" style="white-space: pre-line;" th:text="${obs.comment}">Cuerpo de la observación.</p>
                             </div>
-                        </div>
 
-                        <div th:unless="${courseName != null}" class="m-auto text-muted">
-                            <div class="display-3 mb-2">📄</div>
-                            <p class="fw-bold m-0">Selecciona un curso para ver sus tareas</p>
-                        </div>
+                            <div th:if="${#lists.isEmpty(observaciones)}" class="text-center py-5 text-muted italic small">
+                                <div class="fs-1 mb-2">📝</div>
+                                No hay observaciones académicas registradas para este estudiante.
+                            </div>
 
+                        </div>
                     </div>
 
                 </div>
@@ -95,7 +124,12 @@
 
     </main>
 </div>
-
+<script>
+    // Escucha el evento disparado por el controlador para limpiar el textarea tras la inserción
+    document.body.addEventListener('clearCommentBox', function() {
+        document.getElementById('textarea-observation').value = '';
+    });
+</script>
 <script th:src="@{/js/htmx.min.js}"></script>
 <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 </body>

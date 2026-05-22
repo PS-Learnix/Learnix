@@ -1,5 +1,6 @@
 package com.learnix.web.service;
 
+import com.learnix.web.dto.ObservationResponse;
 import com.learnix.web.dto.StudentDetailResponse;
 import com.learnix.web.dto.StudentProfileCourseDto;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,43 @@ public class StudentProfileService {
                 }
                 return list;
             }
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public List<ObservationResponse> getStudentObservationsSp(Integer idStudent) {
+        return jdbcTemplate.execute((org.springframework.jdbc.core.ConnectionCallback<List<ObservationResponse>>) connection -> {
+            CallableStatement cs = connection.prepareCall("CALL public.sp_get_student_observations(?, ?)");
+            cs.setInt(1, idStudent);
+            cs.registerOutParameter(2, Types.OTHER);
+            cs.execute();
+
+            try (ResultSet rs = (ResultSet) cs.getObject(2)) {
+                List<ObservationResponse> list = new ArrayList<>();
+                while (rs.next()) {
+                    list.add(new ObservationResponse(
+                            rs.getInt("id_observation"),
+                            rs.getString("comment"),
+                            rs.getTimestamp("created_at").toLocalDateTime(),
+                            rs.getString("teacher_name")
+                    ));
+                }
+                return list;
+            }
+        });
+    }
+
+    @Transactional
+    public Integer addStudentObservationSp(Integer idStudent, Integer idTeacher, String comment) {
+        return jdbcTemplate.execute((ConnectionCallback<Integer>) connection -> {
+            CallableStatement cs = connection.prepareCall("CALL public.sp_add_student_observation(?, ?, ?, ?)");
+            cs.setInt(1, idStudent);
+            cs.setInt(2, idTeacher);
+            cs.setString(3, comment.trim());
+            cs.registerOutParameter(4, Types.INTEGER);
+
+            cs.execute();
+            return cs.getInt(4);
         });
     }
 }
