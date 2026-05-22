@@ -15,19 +15,7 @@
 <body class="bg-light p-3">
 
 <div class="d-flex gap-3">
-    <aside class="sidebar-panel d-flex flex-column align-items-center py-4 justify-content-between shadow-sm">
-        <div class="d-flex flex-column gap-3 align-items-center">
-            <a href="/dashboard" class="nav-btn bg-light text-secondary">🏠</a>
-            <a href="/asistencia" class="nav-btn bg-light text-secondary">📅</a>
-            <a href="/actividades" class="nav-btn bg-primary text-white">📝</a>
-        </div>
-        <div class="d-flex flex-column gap-4 align-items-center">
-            <a href="/logout" class="text-secondary fs-3 text-decoration-none">🚪</a>
-            <div class="rounded-circle border border-2 overflow-hidden" style="width: 48px; height: 48px;">
-                <img th:src="'https://ui-avatars.com/api/?name=' + ${user.firstName} + '+' + ${user.lastName} + '&background=DBEAFE&color=1E40AF'" class="w-100 h-100">
-            </div>
-        </div>
-    </aside>
+    <aside th:replace="~{layout :: sidebar}"></aside>
 
     <main class="main-panel flex-grow-1 p-4 shadow-sm border bg-white">
         <div class="mb-4">

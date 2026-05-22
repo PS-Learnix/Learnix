@@ -19,24 +19,7 @@
 <div class="d-flex gap-3">
 
     <!-- BARRA LATERAL (Mismo diseño estructural que tu aside de Svelte) -->
-    <aside class="sidebar-panel d-flex flex-column align-items-center py-4 justify-content-between shadow-sm">
-        <div class="d-flex flex-column gap-3 width-full align-items-center">
-            <!-- Botón Inicio Activo -->
-            <a href="/dashboard" class="nav-btn bg-primary text-white" title="Inicio">🏠</a>
-            <!-- Botón Asistencia Dinámico -->
-            <a th:href="${selectedCourse != null} ? @{/asistencia(id=${selectedCourse.idCoursePeriod})} : @{/asistencia}"
-               class="nav-btn bg-light text-secondary" title="Asistencia">📅</a>
-            <a href="/actividades" class="nav-btn bg-light text-secondary" title="Actividades">📝</a>
-        </div>
-
-        <div class="d-flex flex-column gap-4 align-items-center">
-            <a href="/logout" class="text-secondary fs-3 text-decoration-none" title="Cerrar Sesión">🚪</a>
-            <!-- Avatar dinámico del usuario logueado en la sesión -->
-            <div class="rounded-circle border border-2 overflow-hidden shadow-sm" style="width: 48px; height: 48px;">
-                <img th:src="'https://ui-avatars.com/api/?name=' + ${user.firstName} + '+' + ${user.lastName} + '&background=DBEAFE&color=1E40AF'" alt="profile" class="w-100 h-100">
-            </div>
-        </div>
-    </aside>
+    <aside th:replace="~{layout :: sidebar}"></aside>
 
     <!-- PANEL PRINCIPAL (DASHBOARD) -->
     <main class="main-panel flex-grow-1 p-4 shadow-sm border bg-white">
