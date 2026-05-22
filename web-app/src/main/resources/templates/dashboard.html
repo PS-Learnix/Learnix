@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Learnix</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        body { bg-color: #F0F7F4; }
+        .sidebar-panel { background-color: white; border-radius: 2.5rem; width: 100px; height: calc(100vh - 2rem); }
+        .main-panel { background-color: white; border-radius: 2.5rem; height: calc(100vh - 2rem); overflow-y: auto; }
+        .nav-btn { width: 60px; height: 60px; border-radius: 1.2rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; text-decoration: none; transition: transform 0.2s; }
+        .nav-btn:hover { transform: scale(1.05); }
+        .progress-circle { transform: rotate(-90deg); }
+    </style>
+</head>
+<body class="bg-light p-3">
+
+<div class="d-flex gap-3">
+
+    <!-- BARRA LATERAL (Mismo diseño estructural que tu aside de Svelte) -->
+    <aside class="sidebar-panel d-flex flex-column align-items-center py-4 justify-content-between shadow-sm">
+        <div class="d-flex flex-column gap-3 width-full align-items-center">
+            <!-- Botón Inicio Activo -->
+            <a href="/dashboard" class="nav-btn bg-primary text-white" title="Inicio">🏠</a>
+            <!-- Botón Asistencia Dinámico -->
+            <a th:href="${selectedCourse != null} ? @{/asistencia(id=${selectedCourse.idCoursePeriod})} : @{/asistencia}"
+               class="nav-btn bg-light text-secondary" title="Asistencia">📅</a>
+            <a href="/actividades" class="nav-btn bg-light text-secondary" title="Actividades">📝</a>
+        </div>
+
+        <div class="d-flex flex-column gap-4 align-items-center">
+            <a href="/logout" class="text-secondary fs-3 text-decoration-none" title="Cerrar Sesión">🚪</a>
+            <!-- Avatar dinámico del usuario logueado en la sesión -->
+            <div class="rounded-circle border border-2 overflow-hidden shadow-sm" style="width: 48px; height: 48px;">
+                <img th:src="'https://ui-avatars.com/api/?name=' + ${user.firstName} + '+' + ${user.lastName} + '&background=DBEAFE&color=1E40AF'" alt="profile" class="w-100 h-100">
+            </div>
+        </div>
+    </aside>
+
+    <!-- PANEL PRINCIPAL (DASHBOARD) -->
+    <main class="main-panel flex-grow-1 p-4 shadow-sm border bg-white">
+        <div id="dashboard-content">
+
+            <!-- Encabezado de Selección de Cursos -->
+            <header class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-2 bg-primary p-2 rounded-4 shadow">
+                    <div class="bg-white bg-opacity-25 text-white px-3 py-2 rounded-3 fw-bold small">
+                        Mis Cursos
+                    </div>
+                    <div class="d-flex gap-1 px-2">
+                        <button th:each="course : ${teacherCourses}"
+                                th:classappend="${selectedCourse.idCoursePeriod == course.idCoursePeriod} ? 'bg-white text-primary' : 'text-white btn-primary'"
+                                class="btn btn-sm rounded-3 fw-bold px-3 py-2 transition-all"
+                                th:attr="hx-get=@{/dashboard(courseId=${course.idCourse}, coursePeriodId=${course.idCoursePeriod})}"
+                                hx-target="body"
+                                hx-push-url="true">
+                            <span th:text="${course.name} + ' (' + ${course.section} + ')'">Curso (Sección)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div th:if="${selectedCourse != null}">
+                    <a th:href="@{/asistencia(id=${selectedCourse.idCoursePeriod})}" class="btn btn-primary px-4 py-2 rounded-4 fw-bold shadow">
+                        Registrar Asistencia
+                    </a>
+                </div>
+            </header>
+
+            <div class="mb-4">
+                <h2 class="display-6 fw-black text-dark">
+                    <span th:if="${selectedCourse != null}"
+                          th:text="${selectedCourse.name} + ' (' + ${selectedCourse.section} + ') '">
+                        Matemáticas — A
+                    </span>
+                    <span th:unless="${selectedCourse != null}">Selecciona un curso</span>
+                </h2>
+            </div>
+
+            <!-- Grilla de Estadísticas de los Stored Procedures -->
+            <div class="row g-4" th:if="${selectedCourse != null}">
+
+                <!-- Tarjeta Promedio General (SVG Ring) -->
+                <div class="col-md-6">
+                    <div class="card h-100 rounded-5 p-4 border-light shadow-sm d-flex flex-column align-items-center justify-content-center text-center" style="min-height: 280px;">
+                        <h5 class="card-title text-secondary w-100 text-start mb-3">Promedio general del curso</h5>
+                        <div class="position-relative d-inline-flex align-items-center justify-content-center">
+                            <svg class="progress-circle" width="160" height="160" viewBox="0 0 192 192">
+                                <circle cx="96" cy="96" r="75" stroke="#f1f5f9" stroke-width="12" fill="transparent"/>
+                                <circle cx="96" cy="96" r="75" stroke="#1E40AF" stroke-width="12" fill="transparent"
+                                        stroke-dasharray="471.2"
+                                        th:attr="stroke-dashoffset=${stats.getSvgDashOffset()}"/>
+                            </svg>
+                            <div class="position-absolute d-flex flex-column align-items-center">
+                                <span class="fs-2 fw-bold text-primary" th:text="${stats.promedioGeneral}">0.00</span>
+                                <span class="text-muted small font-monospace">ESCALA 4.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta Promedio Asistencia -->
+                <div class="col-md-6">
+                    <div class="card h-100 rounded-5 p-4 border-light shadow-sm d-flex flex-column justify-content-between" style="min-height: 280px;">
+                        <h5 class="card-title text-secondary">Promedio de Asistencia</h5>
+                        <div class="my-auto">
+                            <div class="d-flex justify-content-between align-items-end mb-2">
+                                <span class="display-4 fw-bold text-success" th:text="${stats.promedioAsistencia} + '%'">0%</span>
+                                <span class="text-muted small fw-bold">Asistencia Total</span>
+                            </div>
+                            <div class="progress rounded-pill" style="height: 20px;">
+                                <div class="progress-bar bg-success transition-all" role="progressbar"
+                                     th:style="'width: ' + ${stats.promedioAsistencia} + '%'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta Estado Académico -->
+                <div class="col-12">
+                    <div class="card rounded-5 p-4 border-light shadow-sm">
+                        <h5 class="card-title text-secondary mb-4">Estado Académico del Grupo</h5>
+
+                        <div class="d-flex flex-column gap-4">
+                            <div>
+                                <div class="d-flex justify-content-between font-bold mb-1 small fw-bold">
+                                    <span class="text-success text-uppercase">● Estudiantes Aprobados</span>
+                                    <span class="text-dark fs-5" th:text="${stats.aprobadosPct} + '%'">0%</span>
+                                </div>
+                                <div class="progress rounded-pill" style="height: 15px;">
+                                    <div class="progress-bar bg-success" th:style="'width: ' + ${stats.aprobadosPct} + '%'"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="d-flex justify-content-between font-bold mb-1 small fw-bold">
+                                    <span class="text-warning text-uppercase">● En Riesgo Académico</span>
+                                    <span class="text-dark fs-5" th:text="${stats.riesgoPct} + '%'">0%</span>
+                                </div>
+                                <div class="progress rounded-pill" style="height: 15px;">
+                                    <div class="progress-bar bg-warning" th:style="'width: ' + ${stats.riesgoPct} + '%'"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+</div>
+
+<script th:src="@{/js/htmx.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
