@@ -1,38 +1,39 @@
 name: learnix-application
 
 services:
-
-  postgres:
-    image: postgres:16-alpine
+  mysql:
+    image: mysql:8.0
     container_name: LearnixDatabase
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-learnix_user}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-learnix_password}
-      - POSTGRES_DB=${POSTGRES_DB:-learnix_database}
+      - MYSQL_USER=${MYSQL_USER:-learnix_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-learnix_password}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-learnix_database}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root_password}
     ports:
-      - "5435:5432"
+      - "3309:3306"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-learnix_user} -d ${POSTGRES_DB:-learnix_database}" ]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u ${MYSQL_USER:-learnix_user} --password=${MYSQL_PASSWORD:-learnix_password}"]
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 5s
+      start_period: 10s
     networks:
       - learnix-network
 
   backend:
-    profiles: ["backend"]
     build: web-app
+    profiles:
+      - dev
     image: learnix-backend
     container_name: LearnixBackend
     ports:
       - "8080:8080"
     environment:
-      - DATABASE_URL=${DATABASE_URL:-jdbc:postgresql://postgres:5432/learnix_database}
-      - POSTGRES_USER=${POSTGRES_USER:-learnix_user}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-learnix_password}
+      - DATABASE_URL=${DATABASE_URL:-jdbc:mysql://mysql:3306/learnix_database}
+      - MYSQL_USER=${MYSQL_USER:-learnix_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-learnix_password}
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
     networks:
       - learnix-network

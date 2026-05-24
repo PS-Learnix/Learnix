@@ -1,15 +1,13 @@
-CREATE OR REPLACE PROCEDURE sp_authenticate_user(
-    IN p_email VARCHAR,
-    IN p_password VARCHAR,
+DELIMITER //
+CREATE PROCEDURE sp_authenticate_user(
+    IN p_email VARCHAR(150),
+    IN p_password VARCHAR(255),
     OUT o_id_user INT,
-    OUT o_first_name VARCHAR,
-    OUT o_last_name VARCHAR,
-    OUT o_email VARCHAR
+    OUT o_first_name VARCHAR(100),
+    OUT o_last_name VARCHAR(100),
+    OUT o_email VARCHAR(150)
 )
-    LANGUAGE plpgsql
-AS $$
 BEGIN
-
     SELECT
         id_user,
         first_name,
@@ -22,8 +20,7 @@ BEGIN
         o_email
     FROM users
     WHERE email = TRIM(p_email)
-      AND password = TRIM(p_password)
-    LIMIT 1;
-
-END;
-$$;
+                      AND password = TRIM(p_password)
+                  LIMIT 1;
+END //
+DELIMITER ;

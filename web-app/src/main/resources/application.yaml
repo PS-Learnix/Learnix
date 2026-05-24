@@ -2,7 +2,7 @@ spring:
   application:
     name: LearnixWeb
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://postgres:5432/learnix_database}
+    url: ${DATABASE_URL:jdbc:mysql://mysql:3306/learnix_database}
     username: ${POSTGRES_USER:learnix_user}
     password: ${POSTGRES_PASSWORD:learnix_password}
     hikari:
