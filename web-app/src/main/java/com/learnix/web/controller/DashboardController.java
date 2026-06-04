@@ -25,7 +25,7 @@ public class DashboardController {
 
     @GetMapping("/dashboard")
     public String showDashboard(
-            @RequestParam(value = "idCoursePeriod", required = false) Integer idCoursePeriod,
+            @RequestParam(value = "coursePeriodId", required = false) Integer idCoursePeriod,
             @CookieValue(value = "last_course_period_id", required = false) Integer lastPeriodCookie,
             @RequestHeader(value = "HX-Request", required = false) String hxRequest,
             HttpSession session,
@@ -39,13 +39,15 @@ public class DashboardController {
         model.addAttribute("user", user);
 
         List<DashboardCourseResponse> courseList = dashboardService.getTeacherCourseList(user.idUser());
-        model.addAttribute("teacherCourse", courseList);
+        model.addAttribute("teacherCourses", courseList);
 
         if (courseList.isEmpty()) return "views/dashboard/index";
 
         DashboardCourseResponse selectedCourse = dashboardService.determineSelectedCourse(
                 courseList, idCoursePeriod, lastPeriodCookie
         );
+
+        model.addAttribute("selectedCourse", selectedCourse);
 
         Cookie cookie = new Cookie("last_course_period_id", String.valueOf(selectedCourse.idCoursePeriod()));
         cookie.setPath("/");

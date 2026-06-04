@@ -65,9 +65,9 @@ public class DashboardRepository extends BaseProcedureRepository{
 
         String averageAttendance = "0.00";
         if (attendanceMap != null) {
-            Object attValue = attendanceMap.get("o_asistencia") != null
-                    ? attendanceMap.get("o_asistencia")
-                    : attendanceMap.get("asistencia");
+            Object attValue = attendanceMap.get("o_asistencia_pct") != null
+                    ? attendanceMap.get("o_asistencia_pct")
+                    : attendanceMap.get("asistencia_pct");
             if (attValue != null) averageAttendance = attValue.toString();
         }
 
@@ -84,8 +84,8 @@ public class DashboardRepository extends BaseProcedureRepository{
         return new DashboardStatsResponse(
                 overallAverage,
                 averageAttendance,
-                approved + "%",
-                risk + "%"
+                approved.toString(),
+                risk.toString()
         );
     }
 

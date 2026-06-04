@@ -22,6 +22,17 @@ public abstract class BaseProcedureRepository {
     ) {
         Map<String, Object> inParams = Collections.singletonMap(paramName, paramValue);
         Map<String, Object> outParams = call.execute(inParams);
+        System.out.println("DEBUG executeAndConvert outParams: " + outParams);
+
+        return objectMapper.convertValue(outParams, targetClass);
+    }
+
+    protected  <T> T executeAndConvert(
+            SimpleJdbcCall call, Class<T> targetClass,
+            Map<String, Object> inParams
+    ) {
+        Map<String, Object> outParams = call.execute(inParams);
+        System.out.println("DEBUG executeAndConvert Map outParams: " + outParams);
 
         return objectMapper.convertValue(outParams, targetClass);
     }
@@ -32,6 +43,22 @@ public abstract class BaseProcedureRepository {
     ) {
         Map<String, Object> inParams = Collections.singletonMap(paramName, paramValue);
         Map<String, Object> outParams = call.execute(inParams);
+        System.out.println("DEBUG executeAndConvertList outParams: " + outParams);
+
+        return objectMapper.convertValue(
+                outParams.get(resultSetKey),
+                objectMapper.getTypeFactory().constructCollectionType(
+                        List.class, targetClass
+                )
+        );
+    }
+
+    protected  <T> List<T> executeAndConvertList(
+            SimpleJdbcCall call, Class<T> targetClass,
+            Map<String, Object> inParams, String resultSetKey
+    ) {
+        Map<String, Object> outParams = call.execute(inParams);
+        System.out.println("DEBUG executeAndConvertList Map outParams: " + outParams);
 
         return objectMapper.convertValue(
                 outParams.get(resultSetKey),

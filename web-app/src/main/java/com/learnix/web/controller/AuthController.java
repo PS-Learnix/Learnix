@@ -3,7 +3,7 @@ package com.learnix.web.controller;
 import com.learnix.web.dto.LoginRequest;
 import com.learnix.web.dto.UserResponse;
 import com.learnix.web.repository.AuthRepository;
-import com.learnix.web.service.AuthService;
+
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -18,8 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 @Controller
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+
     @Autowired
     private AuthRepository authRepository;
 
