@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="stats-section">
+    <div class="row g-4" th:if="${selectedCourse != null}">
+
+        <div class="col-md-6">
+            <div class="card h-100 rounded-5 p-4 border-light shadow-sm d-flex flex-column align-items-center justify-content-center text-center" style="min-height: 280px;">
+                <h5 class="card-title text-secondary w-100 text-start mb-3">Promedio general del curso</h5>
+                <div class="position-relative d-inline-flex align-items-center justify-content-center">
+                    <svg class="progress-circle" width="160" height="160" viewBox="0 0 192 192">
+                        <circle cx="96" cy="96" r="75" stroke="#f1f5f9" stroke-width="12" fill="transparent"/>
+                        <circle cx="96" cy="96" r="75" stroke="#1E40AF" stroke-width="12" fill="transparent"
+                                stroke-dasharray="471.2"
+                                th:attr="stroke-dashoffset=${stats.getSvgDashOffset()}"/>
+                    </svg>
+                    <div class="position-absolute d-flex flex-column align-items-center">
+                        <span class="fs-2 fw-bold text-primary" th:text="${stats.overallCourseAverage}">0.00</span>
+                        <span class="text-muted small font-monospace">ESCALA 4.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 rounded-5 p-4 border-light shadow-sm d-flex flex-column justify-content-between" style="min-height: 280px;">
+                <h5 class="card-title text-secondary">Promedio de Asistencia</h5>
+                <div class="my-auto">
+                    <div class="d-flex justify-content-between align-items-end mb-2">
+                        <span class="display-4 fw-bold text-success" th:text="${stats.averageCourseAttendance} + '%'">0%</span>
+                        <span class="text-muted small fw-bold">Asistencia Total</span>
+                    </div>
+                    <div class="progress rounded-pill" style="height: 20px;">
+                        <div class="progress-bar bg-success transition-all" role="progressbar"
+                             th:style="'width: ' + ${stats.averageCourseAttendance} + '%'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card rounded-5 p-4 border-light shadow-sm">
+                <h5 class="card-title text-secondary mb-4">Estado Académico del Grupo</h5>
+
+                <div class="d-flex flex-column gap-4">
+                    <div>
+                        <div class="d-flex justify-content-between font-bold mb-1 small fw-bold">
+                            <span class="text-success text-uppercase">● Estudiantes Aprobados</span>
+                            <span class="text-dark fs-5" th:text="${stats.approvedPercentage} + '%'">0%</span>
+                        </div>
+                        <div class="progress rounded-pill" style="height: 15px;">
+                            <div class="progress-bar bg-success" th:style="'width: ' + ${stats.approvedPercentage} + '%'"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="d-flex justify-content-between font-bold mb-1 small fw-bold">
+                            <span class="text-warning text-uppercase">● En Riesgo Académico</span>
+                            <span class="text-dark fs-5" th:text="${stats.riskPercentage} + '%'">0%</span>
+                        </div>
+                        <div class="progress rounded-pill" style="height: 15px;">
+                            <div class="progress-bar bg-warning" th:style="'width: ' + ${stats.riskPercentage} + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

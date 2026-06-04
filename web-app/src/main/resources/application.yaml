@@ -24,4 +24,13 @@ springdoc:
   api-docs:
     enabled: true
 server:
-  port: 8083
+  port: 8084
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
+        orm:
+          jdbc:
+            bind: TRACE

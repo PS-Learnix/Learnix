@@ -3,7 +3,7 @@ name: learnix-application
 services:
   mysql:
     image: mysql:8.0
-    container_name: LearnixDatabase
+    container_name: learnix-database
     environment:
       - MYSQL_USER=${MYSQL_USER:-learnix_user}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-learnix_password}
@@ -25,7 +25,7 @@ services:
     profiles:
       - dev
     image: learnix-backend
-    container_name: LearnixBackend
+    container_name: learnix-backend
     ports:
       - "8080:8080"
     environment:

@@ -2,6 +2,7 @@ package com.learnix.web.controller;
 
 import com.learnix.web.dto.LoginRequest;
 import com.learnix.web.dto.UserResponse;
+import com.learnix.web.repository.AuthRepository;
 import com.learnix.web.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -19,6 +20,8 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+    @Autowired
+    private AuthRepository authRepository;
 
     // Carga inicial de la página de Login
     @GetMapping("/login")
@@ -45,7 +48,9 @@ public class AuthController {
         try {
             // 2. Autenticación imperativa usando el Stored Procedure mediante el servicio
             // Nota el uso de la sintaxis de métodos del Record: .email() y .password()
-            UserResponse user = authService.authenticateSp(loginRequest.email(), loginRequest.password());
+
+
+            UserResponse user = authRepository.authenticateUserSp(loginRequest.email(), loginRequest.password());
 
             // 3. Verificación del resultado del SP
             if (user == null) {
@@ -72,6 +77,7 @@ public class AuthController {
 
             return "login :: login-form";
         }
+
     }
 
     // Cierre de sesión e invalidación del estado

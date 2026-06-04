@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$LAYOUT_TITLE - $CONTENT_TITLE">Learnix</title>
+
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        body {
+            background-color: #F0F7F4;
+        }
+
+        .sidebar-panel {
+            background-color: white;
+            border-radius: 2.5rem;
+            width: 100px;
+            height: calc(100vh - 2rem);
+            position: sticky;
+            top: 1rem;
+        }
+
+        .main-panel {
+            background-color: white;
+            border-radius: 2.5rem;
+            height: calc(100vh - 2rem);
+            overflow-y: auto;
+        }
+
+        .nav-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+
+        .nav-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .progress-circle {
+            transform: rotate(-90deg);
+        }
+    </style>
+    <th:block layout:fragment="styles"></th:block>
+</head>
+<body class="bg-light p-3">
+
+<div class="d-flex gap-3">
+
+    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+    <main class="main-panel flex-grow-1 p-4 shadow-sm border bg-white">
+        <div layout:fragment="content"></div>
+    </main>
+
+</div>
+
+<script th:src="@{/js/htmx.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<th:block layout:fragment="scripts"></th:block>
+</body>
+</html>

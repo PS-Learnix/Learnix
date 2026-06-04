@@ -1,6 +1,6 @@
 package com.learnix.web.dto;
 
-public record CourseDashboardResponse(
+public record DashboardCourseResponse(
         Integer idCourse,
         String name,
         Integer idCoursePeriod,

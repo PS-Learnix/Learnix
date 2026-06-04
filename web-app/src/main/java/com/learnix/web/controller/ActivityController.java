@@ -1,13 +1,10 @@
 package com.learnix.web.controller;
 
-import com.learnix.web.dto.ActivityResponse;
-import com.learnix.web.dto.CourseDashboardResponse;
-import com.learnix.web.dto.StudentResponse;
+import com.learnix.web.dto.DashboardCourseResponse;
 import com.learnix.web.dto.UserResponse;
 import com.learnix.web.service.AttendanceService;
 import com.learnix.web.service.ActivityService;
 import com.learnix.web.service.DashboardService;
-import com.learnix.web.service.GradeService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +31,7 @@ public class ActivityController {
         if (user == null) return "redirect:/login";
         model.addAttribute("user", user);
 
-        List<CourseDashboardResponse> teacherCourses = dashboardService.getTeacherCoursesSp(user.idUser());
+        List<DashboardCourseResponse> teacherCourses = dashboardService.getTeacherCourseList(user.idUser());
         model.addAttribute("teacherCourses", teacherCourses);
 
         // Respetamos la cookie del último curso period seleccionado para mantener la consistencia
@@ -43,7 +40,7 @@ public class ActivityController {
 
         if (targetPeriodId == null) return "actividades";
 
-        CourseDashboardResponse selectedCourse = teacherCourses.stream()
+        DashboardCourseResponse selectedCourse = teacherCourses.stream()
                 .filter(c -> c.idCoursePeriod().equals(targetPeriodId)).findFirst().orElse(teacherCourses.get(0));
         model.addAttribute("selectedCourse", selectedCourse);
 

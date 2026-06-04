@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<aside th:fragment="sidebar"
+       class="sidebar-panel d-flex flex-column align-items-center py-4 justify-content-between shadow-sm">
+
+    <div class="d-flex flex-column gap-3 w-100 align-items-center">
+
+        <a th:href="@{/templates/views/dashboard}"
+           th:classappend="${currentUri != null && currentUri.startsWith('/dashboard')} ? 'bg-primary text-white' : 'bg-light text-secondary'"
+           class="nav-btn" title="Inicio">🏠</a>
+
+        <a th:href="${selectedCourse != null} ? @{/asistencia(id=${selectedCourse.idCoursePeriod})} : @{/asistencia}"
+           th:classappend="${currentUri != null && currentUri.startsWith('/asistencia')} ? 'bg-primary text-white' : 'bg-light text-secondary'"
+           class="nav-btn" title="Asistencia">📅</a>
+
+        <a th:href="@{/actividades}"
+           th:classappend="${currentUri != null && currentUri.startsWith('/actividades')} ? 'bg-primary text-white' : 'bg-light text-secondary'"
+           class="nav-btn" title="Actividades">📝</a>
+    </div>
+
+    <div class="d-flex flex-column gap-4 align-items-center">
+        <a th:href="@{/logout}" class="text-secondary fs-3 text-decoration-none" title="Cerrar Sesión">🚪</a>
+
+        <a th:href="@{/perfil}" class="rounded-circle border border-2 overflow-hidden shadow-sm d-block transition-all"
+           style="width: 48px; height: 48px;" title="Mi Perfil"
+           onmouseover="this.style.transform='scale(1.1)'; this.style.borderColor='#1E40AF';"
+           onmouseout="this.style.transform='scale(1)'; this.style.borderColor='inherit';">
+            <img th:src="'https://ui-avatars.com/api/?name=' + ${user.firstName} + '+' + ${user.lastName} + '&background=DBEAFE&color=1E40AF'"
+                 alt="profile" class="w-100 h-100">
+        </a>
+    </div>
+
+</aside>
+
+</body>
+</html>
