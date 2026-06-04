@@ -10,16 +10,22 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+@RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
+
+    private final MobileAuthInterceptor mobileAuthInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(mobileAuthInterceptor)
+                .addPathPatterns("/api/mobile/**")
+                .excludePathPatterns("/api/mobile/auth/login");
+
         registry.addInterceptor(new HandlerInterceptor() {
             @Override
             public void postHandle(HttpServletRequest request, HttpServletResponse response,
-                                   Object handler, ModelAndView modelAndView) throws Exception {
+                    Object handler, ModelAndView modelAndView) throws Exception {
                 if (modelAndView != null) {
-                    // Inyectamos de forma automatizada la URI real en todas las vistas del sistema
                     modelAndView.addObject("currentUri", request.getRequestURI());
                 }
             }

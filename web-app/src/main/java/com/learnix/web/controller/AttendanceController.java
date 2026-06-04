@@ -32,7 +32,7 @@ public class AttendanceController {
         model.addAttribute("user", user);
 
         // Barra lateral: obtener cursos
-        List<CourseDashboardResponse> teacherCourses = dashboardService.getTeacherCoursesSp(user.idUser());
+        List<DashboardCourseResponse> teacherCourses = dashboardService.getTeacherCourseList(user.idUser());
         model.addAttribute("teacherCourses", teacherCourses);
 
         // Fallback: Si no viene ID de curso, seleccionamos el primero disponible
@@ -47,7 +47,7 @@ public class AttendanceController {
 
         // Obtener curso seleccionado para el título
         Integer finalTargetPeriodId = targetPeriodId;
-        CourseDashboardResponse selectedCourse = teacherCourses.stream()
+        DashboardCourseResponse selectedCourse = teacherCourses.stream()
                 .filter(c -> c.idCoursePeriod().equals(finalTargetPeriodId))
                 .findFirst().orElse(teacherCourses.get(0));
         model.addAttribute("selectedCourse", selectedCourse);

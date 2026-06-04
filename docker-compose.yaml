@@ -3,7 +3,7 @@ name: learnix-application
 services:
   mysql:
     image: mysql:8.0
-    container_name: LearnixDatabase
+    container_name: learnix-database
     environment:
       - MYSQL_USER=${MYSQL_USER:-learnix_user}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-learnix_password}
@@ -12,7 +12,7 @@ services:
     ports:
       - "3309:3306"
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u ${MYSQL_USER:-learnix_user} --password=${MYSQL_PASSWORD:-learnix_password}"]
+      test: [ "CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u ${MYSQL_USER:-learnix_user} --password=${MYSQL_PASSWORD:-learnix_password}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,10 +22,8 @@ services:
 
   backend:
     build: web-app
-    profiles:
-      - dev
     image: learnix-backend
-    container_name: LearnixBackend
+    container_name: learnix-backend
     ports:
       - "8080:8080"
     environment:

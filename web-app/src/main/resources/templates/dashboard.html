@@ -35,8 +35,9 @@
                         <button th:each="course : ${teacherCourses}"
                                 th:classappend="${selectedCourse.idCoursePeriod == course.idCoursePeriod} ? 'bg-white text-primary' : 'text-white btn-primary'"
                                 class="btn btn-sm rounded-3 fw-bold px-3 py-2 transition-all"
-                                th:attr="hx-get=@{/dashboard(courseId=${course.idCourse}, coursePeriodId=${course.idCoursePeriod})}"
-                                hx-target="body"
+                                th:attr="hx-get=@{/dashboard(coursePeriodId=${course.idCoursePeriod})}"
+                                hx-target="#dashboard-content"
+                                hx-swap="outerHTML"
                                 hx-push-url="true">
                             <span th:text="${course.name} + ' (' + ${course.section} + ')'">Curso (Sección)</span>
                         </button>

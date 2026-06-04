@@ -3,17 +3,13 @@ package com.learnix.web.service;
 import com.learnix.web.dto.ObservationResponse;
 import com.learnix.web.dto.StudentDetailResponse;
 import com.learnix.web.dto.StudentProfileCourseDto;
+import com.learnix.web.repository.StudentProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.CallableStatement;
-import java.sql.ResultSet;
-import java.sql.Types;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -21,8 +17,8 @@ import java.util.List;
 public class StudentProfileService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final StudentProfileRepository studentProfileRepository;
 
-    @Transactional(readOnly = true)
     public StudentDetailResponse getStudentDetailSp(Integer idStudent) {
         String sql = "SELECT id_student, first_name, last_name, dni, birth_date FROM students WHERE id_student = ?";
         try {
@@ -38,62 +34,16 @@ public class StudentProfileService {
         }
     }
 
-    @Transactional(readOnly = true)
     public List<StudentProfileCourseDto> getStudentCoursesSp(Integer idStudent) {
-        return jdbcTemplate.execute((ConnectionCallback<List<StudentProfileCourseDto>>) connection -> {
-            CallableStatement cs = connection.prepareCall("CALL public.sp_get_student_dashboard_courses(?, ?)");
-            cs.setInt(1, idStudent);
-            cs.registerOutParameter(2, Types.OTHER);
-            cs.execute();
-
-            try (ResultSet rs = (ResultSet) cs.getObject(2)) {
-                List<StudentProfileCourseDto> list = new ArrayList<>();
-                while (rs.next()) {
-                    list.add(new StudentProfileCourseDto(
-                            rs.getInt("id_course_period"),
-                            rs.getString("course_name"),
-                            rs.getDouble("promedio")
-                    ));
-                }
-                return list;
-            }
-        });
+        return studentProfileRepository.getStudentCourses(idStudent);
     }
 
-    @Transactional(readOnly = true)
     public List<ObservationResponse> getStudentObservationsSp(Integer idStudent) {
-        return jdbcTemplate.execute((org.springframework.jdbc.core.ConnectionCallback<List<ObservationResponse>>) connection -> {
-            CallableStatement cs = connection.prepareCall("CALL public.sp_get_student_observations(?, ?)");
-            cs.setInt(1, idStudent);
-            cs.registerOutParameter(2, Types.OTHER);
-            cs.execute();
-
-            try (ResultSet rs = (ResultSet) cs.getObject(2)) {
-                List<ObservationResponse> list = new ArrayList<>();
-                while (rs.next()) {
-                    list.add(new ObservationResponse(
-                            rs.getInt("id_observation"),
-                            rs.getString("comment"),
-                            rs.getTimestamp("created_at").toLocalDateTime(),
-                            rs.getString("teacher_name")
-                    ));
-                }
-                return list;
-            }
-        });
+        return studentProfileRepository.getStudentObservations(idStudent);
     }
 
     @Transactional
     public Integer addStudentObservationSp(Integer idStudent, Integer idTeacher, String comment) {
-        return jdbcTemplate.execute((ConnectionCallback<Integer>) connection -> {
-            CallableStatement cs = connection.prepareCall("CALL public.sp_add_student_observation(?, ?, ?, ?)");
-            cs.setInt(1, idStudent);
-            cs.setInt(2, idTeacher);
-            cs.setString(3, comment.trim());
-            cs.registerOutParameter(4, Types.INTEGER);
-
-            cs.execute();
-            return cs.getInt(4);
-        });
+        return studentProfileRepository.addStudentObservation(idStudent, idTeacher, comment);
     }
 }

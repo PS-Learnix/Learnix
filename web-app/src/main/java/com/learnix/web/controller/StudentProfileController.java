@@ -89,8 +89,8 @@ public class StudentProfileController {
         List<ReportCardItem> grades = reportService.getStudentReportCardSp(idStudent, idCoursePeriod);
 
         // Obtenemos los cursos generales para extraer el nombre de la materia actual
-        List<CourseDashboardResponse> teacherCourses = dashboardService.getTeacherCoursesSp(user.idUser());
-        CourseDashboardResponse currentCourse = teacherCourses.stream()
+        List<DashboardCourseResponse> teacherCourses = dashboardService.getTeacherCourseList(user.idUser());
+        DashboardCourseResponse currentCourse = teacherCourses.stream()
                 .filter(c -> c.idCoursePeriod().equals(idCoursePeriod)).findFirst().orElse(null);
 
         model.addAttribute("student", student);

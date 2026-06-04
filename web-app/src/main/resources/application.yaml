@@ -3,8 +3,8 @@ spring:
     name: LearnixWeb
   datasource:
     url: ${DATABASE_URL:jdbc:mysql://mysql:3306/learnix_database}
-    username: ${POSTGRES_USER:learnix_user}
-    password: ${POSTGRES_PASSWORD:learnix_password}
+    username: ${MYSQL_USER:learnix_user}
+    password: ${MYSQL_PASSWORD:learnix_password}
     hikari:
       connection-timeout: 5000
       initialization-fail-timeout: 5000
@@ -23,5 +23,12 @@ springdoc:
     enabled: true
   api-docs:
     enabled: true
-server:
-  port: 8083
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
+        orm:
+          jdbc:
+            bind: TRACE
