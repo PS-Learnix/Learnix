@@ -6,6 +6,7 @@ import '../controllers/parent_dashboard_controller.dart';
 import '../controllers/progress_filter_controller.dart';
 import '../models/parent_models.dart';
 import '../models/repositories/parent_repository.dart';
+import 'login_screen.dart';
 import 'widgets/alert_tile.dart';
 import 'widgets/attendance_calendar.dart';
 import 'widgets/message_bubble.dart';
@@ -70,7 +71,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               style: TextStyle(fontWeight: FontWeight.w900),
             ),
             actions: [
-              if (data != null)
+              if (data != null) ...[
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: _AlertAction(
@@ -78,6 +79,51 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     onPressed: () => _openReminders(context, data),
                   ),
                 ),
+                IconButton(
+                  tooltip: 'Recargar datos',
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () async {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Recargando datos...'),
+                        duration: Duration(milliseconds: 500),
+                      ),
+                    );
+                    try {
+                      await _controller.refresh();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Datos actualizados'),
+                            duration: Duration(milliseconds: 800),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error al recargar: $e')),
+                        );
+                      }
+                    }
+                  },
+                ),
+                IconButton(
+                  tooltip: 'Cerrar sesion',
+                  icon: const Icon(Icons.logout),
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => LoginScreen(
+                          repository: widget.repository,
+                          isDarkMode: widget.isDarkMode,
+                          onDarkModeChanged: widget.onDarkModeChanged,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ],
           ),
           body: SafeArea(

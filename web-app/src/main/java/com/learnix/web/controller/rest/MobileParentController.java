@@ -20,7 +20,9 @@ public class MobileParentController {
     public ResponseEntity<DashboardMobileResponse> getDashboard(
             @PathVariable Integer parentId,
             @PathVariable Integer studentId) {
+        System.out.println("--> MobileParentController: getDashboard called. parentId=" + parentId + ", studentId=" + studentId);
         DashboardMobileResponse dashboard = mobileService.getDashboard(parentId, studentId);
+        System.out.println("<-- MobileParentController: getDashboard returned studentId=" + (dashboard.student() != null ? dashboard.student().id() : null));
         return ResponseEntity.ok(dashboard);
     }
 
@@ -38,7 +40,15 @@ public class MobileParentController {
             @PathVariable Integer studentId,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
+        System.out.println("--> MobileParentController: getAttendance called. studentId=" + studentId + ", from=" + from + ", to=" + to);
         AttendanceDetailResponse attendance = mobileService.getAttendance(studentId, from, to);
+        System.out.println("<-- MobileParentController: getAttendance returned days count=" + (attendance.days() != null ? attendance.days().size() : 0));
+        if (attendance.days() != null) {
+            for (int i = 0; i < Math.min(attendance.days().size(), 10); i++) {
+                var d = attendance.days().get(i);
+                System.out.println("    Day[" + i + "]: date=" + d.date() + ", status=" + d.status());
+            }
+        }
         return ResponseEntity.ok(attendance);
     }
 

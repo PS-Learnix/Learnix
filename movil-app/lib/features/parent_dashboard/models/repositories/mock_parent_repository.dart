@@ -199,6 +199,12 @@ class MockParentRepository implements ParentRepository {
   }
 
   @override
+  Future<bool> login({required String email, required String password}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    return true;
+  }
+
+  @override
   Future<ChatMessage> sendMessage({
     required int conversationId,
     required String text,
@@ -212,5 +218,10 @@ class MockParentRepository implements ParentRepository {
       isRead: false,
       attachmentName: attachmentName,
     );
+  }
+
+  @override
+  Future<void> updatePreferences({required int parentId, required bool darkMode}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 100));
   }
 }

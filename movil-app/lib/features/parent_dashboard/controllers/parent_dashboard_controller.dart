@@ -19,11 +19,21 @@ class ReminderItem {
 
 class ParentDashboardController extends ChangeNotifier {
   ParentDashboardController({required this.repository}) {
-    dashboardFuture = repository.loadDashboard(parentId: 1);
+    load();
   }
 
   final ParentRepository repository;
-  late final Future<ParentDashboardData> dashboardFuture;
+  late Future<ParentDashboardData> dashboardFuture;
+
+  void load() {
+    dashboardFuture = repository.loadDashboard(parentId: 1);
+  }
+
+  Future<void> refresh() async {
+    load();
+    notifyListeners();
+    await dashboardFuture;
+  }
 
   int _selectedIndex = 0;
   bool _isProfileOpen = false;
