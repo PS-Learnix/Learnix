@@ -7,16 +7,16 @@ import '../parent_models.dart';
 import 'parent_repository.dart';
 
 class HttpParentRepository implements ParentRepository {
-  static String get _defaultUrl {
-    if (kIsWeb) return 'http://localhost:8080';
-    try {
-      if (Platform.isAndroid) return 'http://10.0.2.2:8080';
-    } catch (_) {}
-    return 'http://localhost:8080';
-  }
+  // static String get _defaultUrl {
+  //   if (kIsWeb) return 'http://localhost:8080';
+  //   try {
+  //     if (Platform.isAndroid) return 'http://10.0.2.2:8080';
+  //   } catch (_) {}
+  //   return 'http://localhost:8080';
+  // }
 
-  final String baseUrl = _defaultUrl;
-  //final String baseUrl = 'https://learnix.yoshua-cloud.dedyn.io';
+  // final String baseUrl = _defaultUrl;
+  final String baseUrl = 'https://learnix.yoshua-cloud.dedyn.io';
   
   String? token;
   int? parentId;
