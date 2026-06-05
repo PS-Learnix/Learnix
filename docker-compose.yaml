@@ -18,7 +18,7 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - learnix-network
+      - learnix-infra-net
 
   web:
     build: web-app
@@ -34,8 +34,12 @@ services:
       mysql:
         condition: service_healthy
     networks:
-      - learnix-network
+      - cloud-network
+      - learnix-infra-net
 
 networks:
-  learnix-network:
-    driver: bridge
+  learnix-infra-net:
+    internal: true
+  cloud-network:
+    name: ${CLOUD_NETWORK}
+    external: true
