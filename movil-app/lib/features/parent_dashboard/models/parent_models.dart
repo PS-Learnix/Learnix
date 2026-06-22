@@ -10,6 +10,10 @@ enum AttendanceStatus { attended, absent, late }
 
 enum ReportFormat { pdf, excel }
 
+enum CitationStatus { pending, accepted, rejected, confirmed, cancelled }
+
+enum CitationMode { virtual, inPerson }
+
 class StudentSummary {
   const StudentSummary({
     required this.id,
@@ -153,6 +157,50 @@ class AcademicReport {
   final String title;
   final String description;
   final List<ReportFormat> formats;
+}
+
+class Citation {
+  const Citation({
+    required this.id,
+    required this.title,
+    required this.detail,
+    required this.teacherName,
+    required this.scheduledAt,
+    required this.status,
+    required this.mode,
+    this.meetingUrl,
+  });
+
+  final int id;
+  final String title;
+  final String detail;
+  final String teacherName;
+  final DateTime scheduledAt;
+  final CitationStatus status;
+  final CitationMode mode;
+  final String? meetingUrl;
+}
+
+class CitationMessage {
+  const CitationMessage({
+    required this.id,
+    required this.citationId,
+    required this.senderName,
+    required this.senderRole,
+    required this.body,
+    required this.sentAt,
+    required this.isFromParent,
+    required this.isRead,
+  });
+
+  final int id;
+  final int citationId;
+  final String senderName;
+  final String senderRole;
+  final String body;
+  final DateTime sentAt;
+  final bool isFromParent;
+  final bool isRead;
 }
 
 class ParentDashboardData {

@@ -37,6 +37,56 @@ class MockParentRepository implements ParentRepository {
     ),
   ];
 
+  final List<Citation> _citations = [
+    Citation(
+      id: 101,
+      title: 'Citacion virtual con tutoria',
+      detail: 'Revision de avance academico y acuerdos de apoyo en casa.',
+      teacherName: 'Ana Gomez',
+      scheduledAt: DateTime(2026, 6, 25, 17, 0),
+      status: CitationStatus.pending,
+      mode: CitationMode.virtual,
+      meetingUrl: 'https://meet.learnix.edu/cita-101',
+    ),
+    Citation(
+      id: 102,
+      title: 'Seguimiento de asistencia',
+      detail: 'Coordinacion solicita confirmar recepcion de la citacion.',
+      teacherName: 'Coordinacion General',
+      scheduledAt: DateTime(2026, 6, 28, 16, 30),
+      status: CitationStatus.accepted,
+      mode: CitationMode.virtual,
+      meetingUrl: 'https://meet.learnix.edu/cita-102',
+    ),
+  ];
+
+  final Map<int, List<CitationMessage>> _citationMessages = {
+    101: [
+      CitationMessage(
+        id: 1,
+        citationId: 101,
+        senderName: 'Ana Gomez',
+        senderRole: 'Docente',
+        body: 'Buenas tardes, solicito una reunion para revisar el avance.',
+        sentAt: DateTime(2026, 6, 17, 10, 30),
+        isFromParent: false,
+        isRead: true,
+      ),
+    ],
+    102: [
+      CitationMessage(
+        id: 2,
+        citationId: 102,
+        senderName: 'Coordinacion General',
+        senderRole: 'Coordinador',
+        body: 'Por favor confirme su asistencia a la citacion virtual.',
+        sentAt: DateTime(2026, 6, 17, 11, 0),
+        isFromParent: false,
+        isRead: false,
+      ),
+    ],
+  };
+
   @override
   Future<ParentDashboardData> loadDashboard({required int parentId}) async {
     await Future<void>.delayed(const Duration(milliseconds: 350));
@@ -221,7 +271,79 @@ class MockParentRepository implements ParentRepository {
   }
 
   @override
-  Future<void> updatePreferences({required int parentId, required bool darkMode}) async {
+  Future<List<Citation>> loadCitations({
+    required int parentId,
+    required int studentId,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    return List.unmodifiable(_citations);
+  }
+
+  @override
+  Future<Citation> respondToCitation({
+    required int citationId,
+    required CitationStatus status,
+    String? reason,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 180));
+    final index = _citations.indexWhere((item) => item.id == citationId);
+    if (index == -1) throw StateError('Citacion no encontrada');
+    final current = _citations[index];
+    final updated = Citation(
+      id: current.id,
+      title: current.title,
+      detail: reason == null || reason.trim().isEmpty
+          ? current.detail
+          : '${current.detail}\nMotivo: ${reason.trim()}',
+      teacherName: current.teacherName,
+      scheduledAt: current.scheduledAt,
+      status: status,
+      mode: current.mode,
+      meetingUrl: current.meetingUrl,
+    );
+    _citations[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<Citation> confirmCitation({required int citationId}) {
+    return respondToCitation(
+      citationId: citationId,
+      status: CitationStatus.confirmed,
+    );
+  }
+
+  @override
+  Future<List<CitationMessage>> loadCitationMessages({
+    required int citationId,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 180));
+    return List.unmodifiable(_citationMessages[citationId] ?? []);
+  }
+
+  @override
+  Future<CitationMessage> sendCitationMessage({
+    required int citationId,
+    required String body,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 160));
+    final message = CitationMessage(
+      id: DateTime.now().millisecondsSinceEpoch,
+      citationId: citationId,
+      senderName: 'Padre de familia',
+      senderRole: 'Padre',
+      body: body.trim(),
+      sentAt: DateTime.now(),
+      isFromParent: true,
+      isRead: false,
+    );
+    _citationMessages.putIfAbsent(citationId, () => []).add(message);
+    return message;
+  }
+
+  @override
+  Future<void> updatePreferences(
+      {required int parentId, required bool darkMode}) async {
     await Future<void>.delayed(const Duration(milliseconds: 100));
   }
 }

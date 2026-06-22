@@ -6,6 +6,7 @@ import '../controllers/parent_dashboard_controller.dart';
 import '../controllers/progress_filter_controller.dart';
 import '../models/parent_models.dart';
 import '../models/repositories/parent_repository.dart';
+import 'citations_screen.dart';
 import 'login_screen.dart';
 import 'widgets/alert_tile.dart';
 import 'widgets/attendance_calendar.dart';
@@ -196,6 +197,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 clipBehavior: Clip.antiAlias,
                 child: _ProfileSheet(
                   data: data,
+                  repository: widget.repository,
                   onDarkModeChanged: widget.onDarkModeChanged,
                   onClose: _controller.closeProfile,
                 ),
@@ -694,11 +696,13 @@ class _MessagingTabState extends State<_MessagingTab> {
 class _ProfileSheet extends StatelessWidget {
   const _ProfileSheet({
     required this.data,
+    required this.repository,
     required this.onDarkModeChanged,
     required this.onClose,
   });
 
   final ParentDashboardData data;
+  final ParentRepository repository;
   final ValueChanged<bool> onDarkModeChanged;
   final VoidCallback onClose;
 
@@ -758,6 +762,35 @@ class _ProfileSheet extends StatelessWidget {
                     icon: const Icon(Icons.open_in_new),
                     label: const Text('Ver comunicados'),
                   ),
+                ),
+              ],
+            ),
+          ),
+          _ProfileSection(
+            title: 'Citaciones virtuales',
+            icon: Icons.video_call_outlined,
+            child: Column(
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.event_note_outlined),
+                  title: const Text('Gestionar citaciones'),
+                  subtitle: const Text(
+                    'Aceptar, rechazar, confirmar y responder mensajes.',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    onClose();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => CitationsScreen(
+                          repository: repository,
+                          parentId: 1,
+                          studentId: data.student.id,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

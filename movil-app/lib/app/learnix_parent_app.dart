@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../features/parent_dashboard/controllers/theme_controller.dart';
 import '../features/parent_dashboard/models/repositories/http_parent_repository.dart';
+import '../features/parent_dashboard/models/repositories/parent_repository.dart';
 import '../features/parent_dashboard/views/login_screen.dart';
 import 'theme.dart';
 
 class LearnixParentApp extends StatefulWidget {
-  const LearnixParentApp({super.key});
+  const LearnixParentApp({super.key, this.repository});
+
+  final ParentRepository? repository;
 
   @override
   State<LearnixParentApp> createState() => _LearnixParentAppState();
@@ -14,7 +17,8 @@ class LearnixParentApp extends StatefulWidget {
 
 class _LearnixParentAppState extends State<LearnixParentApp> {
   final ThemeController _themeController = ThemeController();
-  final HttpParentRepository _repository = HttpParentRepository();
+  late final ParentRepository _repository =
+      widget.repository ?? HttpParentRepository();
 
   @override
   void initState() {

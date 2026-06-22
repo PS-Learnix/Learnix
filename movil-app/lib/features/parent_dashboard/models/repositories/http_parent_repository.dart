@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -7,17 +6,8 @@ import '../parent_models.dart';
 import 'parent_repository.dart';
 
 class HttpParentRepository implements ParentRepository {
-  // static String get _defaultUrl {
-  //   if (kIsWeb) return 'http://localhost:8080';
-  //   try {
-  //     if (Platform.isAndroid) return 'http://10.0.2.2:8080';
-  //   } catch (_) {}
-  //   return 'http://localhost:8080';
-  // }
-
-  // final String baseUrl = _defaultUrl;
   final String baseUrl = 'https://learnix.yoshua-cloud.dedyn.io';
-  
+
   String? token;
   int? parentId;
   int? studentId;
@@ -82,7 +72,7 @@ class HttpParentRepository implements ParentRepository {
         if (parentData != null) {
           parentId = parentData['id'] as int?;
         }
-        
+
         final studentsData = data['students'];
         if (studentsData is List) {
           studentList = studentsData;
@@ -90,11 +80,13 @@ class HttpParentRepository implements ParentRepository {
             studentId = studentsData.first['id'] as int?;
           }
         }
-        
-        debugPrint('HttpParentRepository: Login successful. Parent ID: $parentId, Student ID: $studentId');
+
+        debugPrint(
+            'HttpParentRepository: Login successful. Parent ID: $parentId, Student ID: $studentId');
         return true;
       } else {
-        debugPrint('HttpParentRepository: Login failed with code ${response.statusCode}');
+        debugPrint(
+            'HttpParentRepository: Login failed with code ${response.statusCode}');
         return false;
       }
     } catch (e) {
@@ -108,15 +100,22 @@ class HttpParentRepository implements ParentRepository {
     final actualParentId = this.parentId ?? parentId;
     final actualStudentId = this.studentId ?? 1;
 
-    debugPrint('HttpParentRepository: Loading dashboard for Parent $actualParentId, Student $actualStudentId');
+    debugPrint(
+        'HttpParentRepository: Loading dashboard for Parent $actualParentId, Student $actualStudentId');
 
     // URLs for concurrent requests
-    final dashboardUri = Uri.parse('$baseUrl/api/mobile/parents/$actualParentId/students/$actualStudentId/dashboard');
-    final progressUri = Uri.parse('$baseUrl/api/mobile/students/$actualStudentId/progress');
-    final attendanceUri = Uri.parse('$baseUrl/api/mobile/students/$actualStudentId/attendance');
-    final remindersUri = Uri.parse('$baseUrl/api/mobile/parents/$actualParentId/students/$actualStudentId/reminders');
-    final incidentsUri = Uri.parse('$baseUrl/api/mobile/parents/$actualParentId/students/$actualStudentId/incidents');
-    final announcementsUri = Uri.parse('$baseUrl/api/mobile/parents/$actualParentId/announcements');
+    final dashboardUri = Uri.parse(
+        '$baseUrl/api/mobile/parents/$actualParentId/students/$actualStudentId/dashboard');
+    final progressUri =
+        Uri.parse('$baseUrl/api/mobile/students/$actualStudentId/progress');
+    final attendanceUri =
+        Uri.parse('$baseUrl/api/mobile/students/$actualStudentId/attendance');
+    final remindersUri = Uri.parse(
+        '$baseUrl/api/mobile/parents/$actualParentId/students/$actualStudentId/reminders');
+    final incidentsUri = Uri.parse(
+        '$baseUrl/api/mobile/parents/$actualParentId/students/$actualStudentId/incidents');
+    final announcementsUri =
+        Uri.parse('$baseUrl/api/mobile/parents/$actualParentId/announcements');
 
     // Execute requests concurrently
     final responses = await Future.wait([
@@ -137,22 +136,28 @@ class HttpParentRepository implements ParentRepository {
 
     // Check status codes
     if (dashboardRes.statusCode != 200) {
-      throw Exception('Failed to load dashboard: Status ${dashboardRes.statusCode}');
+      throw Exception(
+          'Failed to load dashboard: Status ${dashboardRes.statusCode}');
     }
     if (progressRes.statusCode != 200) {
-      throw Exception('Failed to load progress: Status ${progressRes.statusCode}');
+      throw Exception(
+          'Failed to load progress: Status ${progressRes.statusCode}');
     }
     if (attendanceRes.statusCode != 200) {
-      throw Exception('Failed to load attendance: Status ${attendanceRes.statusCode}');
+      throw Exception(
+          'Failed to load attendance: Status ${attendanceRes.statusCode}');
     }
     if (remindersRes.statusCode != 200) {
-      throw Exception('Failed to load reminders: Status ${remindersRes.statusCode}');
+      throw Exception(
+          'Failed to load reminders: Status ${remindersRes.statusCode}');
     }
     if (incidentsRes.statusCode != 200) {
-      throw Exception('Failed to load incidents: Status ${incidentsRes.statusCode}');
+      throw Exception(
+          'Failed to load incidents: Status ${incidentsRes.statusCode}');
     }
     if (announcementsRes.statusCode != 200) {
-      throw Exception('Failed to load announcements: Status ${announcementsRes.statusCode}');
+      throw Exception(
+          'Failed to load announcements: Status ${announcementsRes.statusCode}');
     }
 
     // 1. Parse Dashboard Response
@@ -166,8 +171,10 @@ class HttpParentRepository implements ParentRepository {
       id: studentJson['id'] as int? ?? actualStudentId,
       fullName: studentJson['fullName'] as String? ?? 'Estudiante',
       gradeSection: studentJson['gradeSection'] as String? ?? '',
-      generalAverage: (studentJson['generalAverage'] as num?)?.toDouble() ?? 0.0,
-      attendancePercentage: (studentJson['attendancePercentage'] as num?)?.toDouble() ?? 100.0,
+      generalAverage:
+          (studentJson['generalAverage'] as num?)?.toDouble() ?? 0.0,
+      attendancePercentage:
+          (studentJson['attendancePercentage'] as num?)?.toDouble() ?? 100.0,
       status: _parseAcademicStatus(studentJson['academicStatus'] as String?),
     );
 
@@ -197,7 +204,8 @@ class HttpParentRepository implements ParentRepository {
       return AcademicReport(
         title: item['title'] as String? ?? '',
         description: item['description'] as String? ?? '',
-        formats: formatsList.map((f) => _parseReportFormat(f as String?)).toList(),
+        formats:
+            formatsList.map((f) => _parseReportFormat(f as String?)).toList(),
       );
     }).toList();
 
@@ -252,7 +260,8 @@ class HttpParentRepository implements ParentRepository {
         date: _parseDate(item['date']),
         status: AlertStatus.newAlert,
         severity: _parseAlertSeverity(item['severity'] as String?),
-        category: _parseAlertCategory(item['type'] as String?, item['title'] as String? ?? ''),
+        category: _parseAlertCategory(
+            item['type'] as String?, item['title'] as String? ?? ''),
       ));
     }
 
@@ -271,7 +280,8 @@ class HttpParentRepository implements ParentRepository {
     }
 
     // 5. Parse Announcements
-    final announcementsData = jsonDecode(utf8.decode(announcementsRes.bodyBytes));
+    final announcementsData =
+        jsonDecode(utf8.decode(announcementsRes.bodyBytes));
     final announcementsItems = announcementsData['items'] as List? ?? [];
     final announcements = announcementsItems.map((item) {
       return Announcement(
@@ -310,7 +320,7 @@ class HttpParentRepository implements ParentRepository {
       isRead: false,
       attachmentName: attachmentName,
     );
-    
+
     // Find matching conversation and append message to simulate ongoing conversation
     final idx = _conversations.indexWhere((c) => c.id == conversationId);
     if (idx != -1) {
@@ -327,18 +337,113 @@ class HttpParentRepository implements ParentRepository {
   }
 
   @override
-  Future<void> updatePreferences({required int parentId, required bool darkMode}) async {
+  Future<List<Citation>> loadCitations({
+    required int parentId,
+    required int studentId,
+  }) async {
     final actualParentId = this.parentId ?? parentId;
-    final uri = Uri.parse('$baseUrl/api/mobile/parents/$actualParentId/preferences');
+    final actualStudentId = this.studentId ?? studentId;
+    final uri = Uri.parse(
+      '$baseUrl/api/mobile/parents/$actualParentId/students/$actualStudentId/citations',
+    );
+    final response = await http.get(uri, headers: _headers);
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load citations: ${response.statusCode}');
+    }
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    final items = data['items'] as List? ?? [];
+    return items.map((item) => _parseCitation(item)).toList();
+  }
+
+  @override
+  Future<Citation> respondToCitation({
+    required int citationId,
+    required CitationStatus status,
+    String? reason,
+  }) async {
+    final uri =
+        Uri.parse('$baseUrl/api/mobile/citations/$citationId/response');
+    final response = await http.patch(
+      uri,
+      headers: _headers,
+      body: jsonEncode({
+        'status': _citationStatusValue(status),
+        if (reason != null && reason.trim().isNotEmpty)
+          'reason': reason.trim(),
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to respond citation: ${response.statusCode}');
+    }
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    return _parseCitation(data['citation'] ?? data);
+  }
+
+  @override
+  Future<Citation> confirmCitation({required int citationId}) async {
+    final uri =
+        Uri.parse('$baseUrl/api/mobile/citations/$citationId/confirm');
+    final response = await http.patch(uri, headers: _headers);
+    if (response.statusCode != 200) {
+      throw Exception('Failed to confirm citation: ${response.statusCode}');
+    }
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    return _parseCitation(data['citation'] ?? data);
+  }
+
+  @override
+  Future<List<CitationMessage>> loadCitationMessages({
+    required int citationId,
+  }) async {
+    final uri =
+        Uri.parse('$baseUrl/api/mobile/citations/$citationId/messages');
+    final response = await http.get(uri, headers: _headers);
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to load citation messages: ${response.statusCode}',
+      );
+    }
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    final items = data['items'] as List? ?? [];
+    return items.map((item) => _parseCitationMessage(item)).toList();
+  }
+
+  @override
+  Future<CitationMessage> sendCitationMessage({
+    required int citationId,
+    required String body,
+  }) async {
+    final uri =
+        Uri.parse('$baseUrl/api/mobile/citations/$citationId/messages');
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode({'body': body.trim()}),
+    );
+    if (response.statusCode != 201) {
+      throw Exception('Failed to send citation message: ${response.statusCode}');
+    }
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    return _parseCitationMessage(data['message'] ?? data);
+  }
+
+  @override
+  Future<void> updatePreferences(
+      {required int parentId, required bool darkMode}) async {
+    final actualParentId = this.parentId ?? parentId;
+    final uri =
+        Uri.parse('$baseUrl/api/mobile/parents/$actualParentId/preferences');
     try {
-      debugPrint('HttpParentRepository: Updating preferences to darkMode=$darkMode');
+      debugPrint(
+          'HttpParentRepository: Updating preferences to darkMode=$darkMode');
       final response = await http.patch(
         uri,
         headers: _headers,
         body: jsonEncode({'darkMode': darkMode}),
       );
       if (response.statusCode != 200) {
-        debugPrint('HttpParentRepository: Preference update failed with status ${response.statusCode}');
+        debugPrint(
+            'HttpParentRepository: Preference update failed with status ${response.statusCode}');
       }
     } catch (e) {
       debugPrint('HttpParentRepository: Error updating preferences: $e');
@@ -421,10 +526,12 @@ class HttpParentRepository implements ParentRepository {
 
   AlertCategory _parseAlertCategory(String? category, String title) {
     if (category == null) {
-      if (title.toLowerCase().contains('incidencia') || title.toLowerCase().contains('disciplin')) {
+      if (title.toLowerCase().contains('incidencia') ||
+          title.toLowerCase().contains('disciplin')) {
         return AlertCategory.incident;
       }
-      if (title.toLowerCase().contains('citacion') || title.toLowerCase().contains('reunion')) {
+      if (title.toLowerCase().contains('citacion') ||
+          title.toLowerCase().contains('reunion')) {
         return AlertCategory.citation;
       }
       return AlertCategory.activityDue;
@@ -454,6 +561,81 @@ class HttpParentRepository implements ParentRepository {
       case 'pdf':
       default:
         return ReportFormat.pdf;
+    }
+  }
+
+  Citation _parseCitation(dynamic item) {
+    final json = item as Map<String, dynamic>? ?? {};
+    return Citation(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      title: json['title'] as String? ?? '',
+      detail: json['detail'] as String? ?? '',
+      teacherName: json['teacherName'] as String? ?? '',
+      scheduledAt: _parseDate(json['scheduledAt']),
+      status: _parseCitationStatus(json['status'] as String?),
+      mode: _parseCitationMode(json['mode'] as String?),
+      meetingUrl: json['meetingUrl'] as String?,
+    );
+  }
+
+  CitationMessage _parseCitationMessage(dynamic item) {
+    final json = item as Map<String, dynamic>? ?? {};
+    return CitationMessage(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      citationId: (json['citationId'] as num?)?.toInt() ?? 0,
+      senderName: json['senderName'] as String? ?? '',
+      senderRole: json['senderRole'] as String? ?? '',
+      body: json['body'] as String? ?? '',
+      sentAt: _parseDate(json['sentAt']),
+      isFromParent: json['isFromParent'] as bool? ?? false,
+      isRead: json['isRead'] as bool? ?? false,
+    );
+  }
+
+  CitationStatus _parseCitationStatus(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'accepted':
+      case 'aceptada':
+        return CitationStatus.accepted;
+      case 'rejected':
+      case 'rechazada':
+        return CitationStatus.rejected;
+      case 'confirmed':
+      case 'confirmada':
+        return CitationStatus.confirmed;
+      case 'cancelled':
+      case 'cancelada':
+        return CitationStatus.cancelled;
+      case 'pending':
+      case 'pendiente':
+      default:
+        return CitationStatus.pending;
+    }
+  }
+
+  CitationMode _parseCitationMode(String? mode) {
+    switch (mode?.toLowerCase()) {
+      case 'in_person':
+      case 'presencial':
+        return CitationMode.inPerson;
+      case 'virtual':
+      default:
+        return CitationMode.virtual;
+    }
+  }
+
+  String _citationStatusValue(CitationStatus status) {
+    switch (status) {
+      case CitationStatus.accepted:
+        return 'accepted';
+      case CitationStatus.rejected:
+        return 'rejected';
+      case CitationStatus.confirmed:
+        return 'confirmed';
+      case CitationStatus.cancelled:
+        return 'cancelled';
+      case CitationStatus.pending:
+        return 'pending';
     }
   }
 
