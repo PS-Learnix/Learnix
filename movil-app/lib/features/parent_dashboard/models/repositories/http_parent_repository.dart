@@ -383,7 +383,11 @@ class HttpParentRepository implements ParentRepository {
   Future<Citation> confirmCitation({required int citationId}) async {
     final uri =
         Uri.parse('$baseUrl/api/mobile/citations/$citationId/confirm');
-    final response = await http.patch(uri, headers: _headers);
+    final response = await http.patch(
+      uri,
+      headers: _headers,
+      body: jsonEncode({'confirmed': true}),
+    );
     if (response.statusCode != 200) {
       throw Exception('Failed to confirm citation: ${response.statusCode}');
     }

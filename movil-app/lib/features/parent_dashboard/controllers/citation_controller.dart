@@ -17,6 +17,7 @@ class CitationController extends ChangeNotifier {
   final int studentId;
 
   bool _isLoading = true;
+  bool _isDisposed = false;
   String? _error;
   List<Citation> _citations = [];
   Citation? _selectedCitation;
@@ -31,7 +32,7 @@ class CitationController extends ChangeNotifier {
   Future<void> load() async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
     try {
       _citations = await repository.loadCitations(
         parentId: parentId,
@@ -44,7 +45,7 @@ class CitationController extends ChangeNotifier {
       _error = '$e';
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -53,10 +54,19 @@ class CitationController extends ChangeNotifier {
     bool shouldNotify = true,
   }) async {
     _selectedCitation = citation;
-    if (shouldNotify) notifyListeners();
-    _messages =
-        await repository.loadCitationMessages(citationId: citation.id);
-    notifyListeners();
+    if (shouldNotify) _safeNotifyListeners();
+    try {
+      final messages =
+          await repository.loadCitationMessages(citationId: citation.id);
+      if (_selectedCitation?.id != citation.id) return;
+      _messages = messages;
+      _error = null;
+    } catch (e) {
+      if (_selectedCitation?.id != citation.id) return;
+      _messages = [];
+      _error = '$e';
+    }
+    _safeNotifyListeners();
   }
 
   Future<void> acceptSelected() {
@@ -84,7 +94,7 @@ class CitationController extends ChangeNotifier {
       body: cleanBody,
     );
     _messages = [..._messages, message];
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   Future<void> _updateSelected(
@@ -107,6 +117,17 @@ class CitationController extends ChangeNotifier {
         if (item.id == updated.id) updated else item,
     ];
     _selectedCitation = updated;
+    _safeNotifyListeners();
+  }
+
+  void _safeNotifyListeners() {
+    if (_isDisposed) return;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 }

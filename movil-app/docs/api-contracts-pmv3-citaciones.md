@@ -14,12 +14,21 @@ Requerimientos revisados del documento actualizado:
 
 La app movil quedo preparada con `Citation`, `CitationMessage`, `CitationController`, `CitationsScreen` y metodos de `ParentRepository` para consumir estos endpoints cuando el backend este disponible.
 
+## Correcciones de consistencia revisadas en movil
+
+- `status` en los responses moviles de citaciones representa el estado del receptor padre-estudiante (`pending`, `accepted`, `rejected`, `confirmed`, `cancelled`), no solo el estado global de la citacion.
+- Los endpoints sin `parentId` en la ruta deben resolver el padre autenticado desde el token y validar que el receptor pertenezca a la citacion.
+- La confirmacion movil envia un body explicito `{ "confirmed": true }`.
+- La app conserva `parentId = 1` como fallback provisional para el login mock; en backend real debe reemplazarse por el `parent.id` retornado por autenticacion o validarse desde el token.
+- La pantalla `CitationsScreen` ya contempla carga, seleccion, respuesta, confirmacion y mensajeria bidireccional. El controlador evita notificaciones de estado despues de cerrar la vista.
+
 ## Convenciones
 
 - Base path sugerido: `/api/mobile`
 - Autenticacion: `Authorization: Bearer <token>`
 - Fechas: ISO 8601 (`YYYY-MM-DDTHH:mm:ss`)
-- Estados de citacion: `pending`, `accepted`, `rejected`, `confirmed`, `cancelled`
+- Estados moviles de receptor: `pending`, `accepted`, `rejected`, `confirmed`, `cancelled`
+- Estados globales de citacion: `scheduled`, `cancelled`, `completed`
 - Modalidades: `virtual`, `in_person`
 - Cuerpo de error sugerido:
 
@@ -84,6 +93,7 @@ Authorization: Bearer <token>
 **Codigos de estado posibles:** `200`, `401`, `403`, `404`, `500`.
 
 **Observaciones tecnicas:** debe validar que `parentId` este vinculado al `studentId`. Las citaciones masivas se devuelven si el estudiante pertenece a la seccion destinataria.
+El campo `status` debe salir de `citation_recipients.recipient_status`.
 
 **Pantalla/componente movil:** `CitationsScreen`, carrusel superior de citaciones.
 
@@ -128,6 +138,7 @@ Authorization: Bearer <token>
 **Codigos de estado posibles:** `200`, `401`, `403`, `404`, `500`.
 
 **Observaciones tecnicas:** el endpoint debe retornar el estado del receptor, no solo el estado global de la citacion.
+Si tambien se requiere el estado institucional de la citacion, devolver un campo adicional `globalStatus`.
 
 **Pantalla/componente movil:** `CitationsScreen`, tarjeta de detalle.
 
@@ -186,6 +197,7 @@ Para rechazo:
 **Codigos de estado posibles:** `200`, `400`, `401`, `403`, `404`, `409`, `422`, `500`.
 
 **Observaciones tecnicas:** solo debe aceptar `accepted` o `rejected`. Si la cita esta `cancelled` o ya vencio, responder `409`.
+El backend debe validar que el usuario autenticado corresponda al receptor registrado en `citation_recipients`.
 
 **Pantalla/componente movil:** botones `Aceptar` y `Rechazar` de `CitationsScreen`.
 
@@ -232,6 +244,7 @@ Para rechazo:
 **Codigos de estado posibles:** `200`, `400`, `401`, `403`, `404`, `409`, `500`.
 
 **Observaciones tecnicas:** recomendado permitir confirmacion despues de `accepted`. Si se interpreta como confirmacion de recepcion, tambien puede permitirse desde `pending`, dejando trazabilidad en eventos.
+La app movil actual habilita el boton `Confirmar` cuando el receptor esta en `accepted`.
 
 **Pantalla/componente movil:** boton `Confirmar` de `CitationsScreen`.
 
@@ -279,6 +292,7 @@ Authorization: Bearer <token>
 **Codigos de estado posibles:** `200`, `401`, `403`, `404`, `500`.
 
 **Observaciones tecnicas:** el campo `after` permite sincronizacion incremental. Debe marcar lectura en una transaccion separada o mediante endpoint dedicado si se requiere control estricto.
+El backend debe calcular `isFromParent` comparando el remitente con el padre autenticado.
 
 **Pantalla/componente movil:** bloque `Comunicacion de la citacion` en `CitationsScreen`.
 
@@ -325,6 +339,7 @@ Authorization: Bearer <token>
 **Codigos de estado posibles:** `201`, `400`, `401`, `403`, `404`, `409`, `422`, `500`.
 
 **Observaciones tecnicas:** validar longitud maxima y sanitizar contenido. Si la citacion esta `cancelled`, responder `409`.
+El sender no debe recibirse desde el cliente; debe derivarse del token.
 
 **Pantalla/componente movil:** campo de texto y boton enviar en `CitationsScreen`.
 
@@ -443,11 +458,12 @@ Finalidad: guardar la citacion creada por docente/colegio.
 | `mode` | VARCHAR(20) |  | `virtual` o `in_person` |
 | `meeting_url` | VARCHAR(500) NULL |  | Enlace virtual |
 | `scope` | VARCHAR(20) |  | `individual`, `section`, `mass` |
-| `status` | VARCHAR(20) |  | `pending`, `cancelled`, `completed` |
+| `global_status` | VARCHAR(20) |  | `scheduled`, `cancelled`, `completed` |
 | `created_at` | TIMESTAMP |  | Creacion |
 | `updated_at` | TIMESTAMP |  | Actualizacion |
 
 Relacion: una citacion tiene muchos receptores, mensajes y eventos.
+El estado que renderiza la app (`status`) debe calcularse desde `citation_recipients.recipient_status`.
 
 ## `citation_recipients`
 
@@ -466,6 +482,7 @@ Finalidad: guardar el estado de cada padre destinatario.
 | `confirmed_at` | DATETIME NULL |  | Confirmacion |
 
 Relacion: resuelve citaciones masivas por padre/estudiante y permite trazabilidad por destinatario.
+Se recomienda una restriccion unica sobre (`id_citation`, `id_parent`, `id_student`) para evitar invitaciones duplicadas.
 
 ## `citation_messages`
 
