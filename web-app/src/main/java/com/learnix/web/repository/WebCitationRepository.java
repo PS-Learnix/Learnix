@@ -180,6 +180,7 @@ public class WebCitationRepository extends BaseProcedureRepository {
 
     public List<Map<String, Object>> getCitationRecipients(Integer citationId) {
         String sql = "SELECT cr.id_recipient as idRecipient, cr.recipient_status as status, cr.response_reason as reason, " +
+                "cr.id_parent as parentId, cr.justification_status as justificationStatus, " +
                 "CONCAT(p.first_name, ' ', p.last_name) as parentName, " +
                 "CONCAT(s.first_name, ' ', s.last_name) as studentName, " +
                 "cr.read_at as readAt, cr.responded_at as respondedAt, cr.confirmed_at as confirmedAt " +
@@ -191,11 +192,63 @@ public class WebCitationRepository extends BaseProcedureRepository {
         return jdbcTemplate.queryForList(sql, citationId);
     }
 
-    public List<CitationMessageDto> getCitationMessages(Integer citationId, String after) {
+    public Map<String, Object> getCitationResponseSummary(Integer citationId) {
+        String sql = """
+                SELECT
+                    COUNT(CASE WHEN recipient_status IN ('accepted', 'confirmed') THEN 1 END) AS acceptedCount,
+                    COUNT(CASE WHEN recipient_status = 'rejected' THEN 1 END) AS rejectedCount,
+                    COUNT(CASE WHEN recipient_status = 'pending' THEN 1 END) AS pendingCount,
+                    COUNT(*) AS totalCount
+                FROM citation_recipients
+                WHERE id_citation = ?
+                """;
+        return jdbcTemplate.queryForMap(sql, citationId);
+    }
+
+    public List<Map<String, Object>> getCommunicationContacts(Integer citationId) {
+        String sql = """
+                SELECT
+                    cr.id_recipient AS idRecipient,
+                    cr.id_parent AS parentId,
+                    cr.id_student AS studentId,
+                    CONCAT(p.first_name, ' ', p.last_name) AS parentName,
+                    CONCAT(s.first_name, ' ', s.last_name) AS studentName,
+                    cr.recipient_status AS status,
+                    cr.response_reason AS reason,
+                    cr.justification_status AS justificationStatus,
+                    (
+                        SELECT cm.body
+                        FROM citation_messages cm
+                        WHERE cm.id_citation = cr.id_citation
+                          AND (
+                              (cm.sender_type = 'parent' AND cm.sender_id = cr.id_parent)
+                              OR (cm.sender_type <> 'parent' AND (cm.target_id_parent IS NULL OR cm.target_id_parent = cr.id_parent))
+                          )
+                        ORDER BY cm.sent_at DESC
+                        LIMIT 1
+                    ) AS lastMessage,
+                    (
+                        SELECT COUNT(*)
+                        FROM citation_messages cm
+                        WHERE cm.id_citation = cr.id_citation
+                          AND cm.sender_type = 'parent'
+                          AND cm.sender_id = cr.id_parent
+                          AND cm.read_at IS NULL
+                    ) AS unreadMessages
+                FROM citation_recipients cr
+                JOIN parents p ON cr.id_parent = p.id_parent
+                JOIN students s ON cr.id_student = s.id_student
+                WHERE cr.id_citation = ?
+                ORDER BY unreadMessages DESC, s.last_name, s.first_name
+                """;
+        return jdbcTemplate.queryForList(sql, citationId);
+    }
+
+    public List<CitationMessageDto> getCitationMessages(Integer citationId, Integer parentId, String after) {
         Timestamp afterTimestamp = after != null ? Timestamp.valueOf(LocalDateTime.parse(after)) : null;
         jdbcTemplate.update(
-                "UPDATE citation_messages SET read_at = NOW() WHERE id_citation = ? AND sender_type = 'parent' AND read_at IS NULL",
-                citationId
+                "UPDATE citation_messages SET read_at = NOW() WHERE id_citation = ? AND sender_type = 'parent' AND sender_id = ? AND read_at IS NULL",
+                citationId, parentId
         );
         String sql = """
                 SELECT
@@ -217,6 +270,10 @@ public class WebCitationRepository extends BaseProcedureRepository {
                     (cm.read_at IS NOT NULL) AS isRead
                 FROM citation_messages cm
                 WHERE cm.id_citation = ?
+                  AND (
+                      (cm.sender_type = 'parent' AND cm.sender_id = ?)
+                      OR (cm.sender_type <> 'parent' AND (cm.target_id_parent IS NULL OR cm.target_id_parent = ?))
+                  )
                   AND (? IS NULL OR cm.sent_at > ?)
                 ORDER BY cm.sent_at ASC
                 """;
@@ -229,18 +286,65 @@ public class WebCitationRepository extends BaseProcedureRepository {
                 rs.getTimestamp("sentAt") != null ? rs.getTimestamp("sentAt").toInstant().toString().substring(0, 19) : null,
                 rs.getBoolean("isFromParent"),
                 rs.getBoolean("isRead")
-        ), citationId, afterTimestamp, afterTimestamp);
+        ), citationId, parentId, parentId, afterTimestamp, afterTimestamp);
     }
 
-    public CitationMessageDto sendTeacherMessage(Integer citationId, String body, Integer teacherId) {
-        Map<String, Object> inParams = Map.of(
-                "p_id_citation", citationId,
-                "p_sender_type", "user",
-                "p_sender_id", teacherId,
-                "p_body", body
-        );
+    public CitationMessageDto sendTeacherMessage(Integer citationId, String body, Integer teacherId, Integer parentId) {
+        Map<String, Object> inParams = new HashMap<>();
+        inParams.put("p_id_citation", citationId);
+        inParams.put("p_sender_type", "user");
+        inParams.put("p_sender_id", teacherId);
+        inParams.put("p_body", body);
+        inParams.put("p_target_id_parent", parentId);
         List<CitationMessageDto> list = executeAndConvertList(sendCitationMessageCall, CitationMessageDto.class, inParams, "sendMessageResult");
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    public void reviewJustification(Integer citationId, Integer recipientId, Integer teacherId, String reviewStatus) {
+        String lookupSql = """
+                SELECT cr.id_parent, cr.justification_status, vc.id_teacher
+                FROM citation_recipients cr
+                JOIN virtual_citations vc ON cr.id_citation = vc.id_citation
+                WHERE cr.id_citation = ? AND cr.id_recipient = ?
+                """;
+        Map<String, Object> row = jdbcTemplate.queryForMap(lookupSql, citationId, recipientId);
+        Number ownerTeacherValue = (Number) row.get("id_teacher");
+        if (ownerTeacherValue == null) {
+            throw new IllegalStateException("La citacion no tiene docente asignado.");
+        }
+        Integer ownerTeacherId = ownerTeacherValue.intValue();
+        if (!ownerTeacherId.equals(teacherId)) {
+            throw new IllegalStateException("No tiene permisos para revisar esta justificacion.");
+        }
+
+        String previousStatus = (String) row.get("justification_status");
+        Integer parentId = ((Number) row.get("id_parent")).intValue();
+
+        int updated = jdbcTemplate.update(
+                """
+                UPDATE citation_recipients
+                SET justification_status = ?, justification_reviewed_at = NOW()
+                WHERE id_citation = ? AND id_recipient = ? AND recipient_status = 'rejected'
+                """,
+                reviewStatus, citationId, recipientId
+        );
+        if (updated == 0) {
+            throw new IllegalStateException("Solo se pueden revisar justificaciones de citaciones rechazadas.");
+        }
+
+        if ("not_justified".equals(reviewStatus) && !"not_justified".equals(previousStatus)) {
+            sendTeacherMessage(
+                    citationId,
+                    "Su justificacion para no asistir a la citacion ha sido revisada y fue marcada como no justificada. Por favor, comuniquese con el docente para coordinar una nueva atencion.",
+                    teacherId,
+                    parentId
+            );
+        }
+
+        jdbcTemplate.update(
+                "INSERT INTO citation_events (id_citation, actor_type, actor_id, event_type, payload) VALUES (?, 'user', ?, 'justification_reviewed', JSON_OBJECT('recipientId', ?, 'reviewStatus', ?))",
+                citationId, teacherId, recipientId, reviewStatus
+        );
     }
 
     public List<CitationEventDto> getCitationEvents(Integer citationId) {

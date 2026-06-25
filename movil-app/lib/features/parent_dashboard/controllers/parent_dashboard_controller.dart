@@ -9,12 +9,14 @@ class ReminderItem {
     required this.detail,
     required this.icon,
     required this.color,
+    required this.category,
   });
 
   final String title;
   final String detail;
   final IconData icon;
   final Color color;
+  final AlertCategory category;
 }
 
 class ParentDashboardController extends ChangeNotifier {
@@ -82,6 +84,7 @@ class ParentDashboardController extends ChangeNotifier {
             '${activity.courseName} vence el ${_date(activity.date)} (${activity.term}).',
         icon: Icons.assignment_late_outlined,
         color: const Color(0xFFFFC107),
+        category: AlertCategory.activityDue,
       ),
     );
 
@@ -97,6 +100,7 @@ class ParentDashboardController extends ChangeNotifier {
         detail: '${alert.detail} Fecha: ${_date(alert.date)}.',
         icon: Icons.event_note_outlined,
         color: const Color(0xFF1E40AF),
+        category: AlertCategory.citation,
       ),
     );
 

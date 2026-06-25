@@ -137,7 +137,17 @@ class _CitationsScreenState extends State<CitationsScreen> {
       ),
     );
     reasonController.dispose();
-    if (reason != null) await _controller.rejectSelected(reason);
+    if (reason == null) return;
+    if (reason.trim().isEmpty) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debe escribir una razon para rechazar la citacion.'),
+        ),
+      );
+      return;
+    }
+    await _controller.rejectSelected(reason);
   }
 
   Future<void> _sendMessage() async {

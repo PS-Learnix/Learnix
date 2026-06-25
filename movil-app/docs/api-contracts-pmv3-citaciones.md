@@ -1,6 +1,6 @@
 # Contratos API - PMV3 Modulo de Citaciones Virtuales
 
-Este documento valida y documenta los contratos necesarios para que `movil-app` renderice el modulo PMV3 sin modificar `web-app`.
+Este documento valida y documenta los contratos necesarios para que `movil-app` renderice el modulo PMV3 conectado a `web-app`.
 
 ## Alcance PMV3
 
@@ -23,6 +23,8 @@ La app movil quedo preparada con `Citation`, `CitationMessage`, `CitationControl
 - La pantalla `CitationsScreen` ya contempla carga, seleccion, respuesta, confirmacion y mensajeria bidireccional. El controlador evita notificaciones de estado despues de cerrar la vista.
 - La vista web docente debe leer `virtual_citations.global_status`; la app movil de padres debe leer `citation_recipients.recipient_status`. No deben reutilizar el mismo significado de `status`.
 - En la vista web docente, los mensajes con `sender_type = parent` se consideran mensajes entrantes del padre; en la app movil, `isFromParent` se calcula contra el padre autenticado.
+- Las justificaciones de rechazo se almacenan en `citation_recipients.response_reason` y se revisan con `justification_status`: `pending_review`, `justified`, `not_justified`.
+- Los mensajes del profesor o automaticos pueden dirigirse a un padre especifico mediante `citation_messages.target_id_parent`, evitando que una citacion masiva filtre conversaciones entre familias.
 
 ## Convenciones
 
@@ -183,6 +185,8 @@ Para rechazo:
 }
 ```
 
+Para `status = rejected`, `reason` es obligatorio. La app movil no debe permitir enviar rechazo con el campo vacio.
+
 **Response esperado `200`:**
 
 ```json
@@ -205,6 +209,7 @@ Para rechazo:
 
 **Observaciones tecnicas:** solo debe aceptar `accepted` o `rejected`. Si la cita esta `cancelled` o ya vencio, responder `409`.
 El backend debe validar que el usuario autenticado corresponda al receptor registrado en `citation_recipients`.
+Cuando `status = rejected`, guardar `response_reason` y establecer `justification_status = pending_review`.
 
 **Pantalla/componente movil:** botones `Aceptar` y `Rechazar` de `CitationsScreen`.
 
@@ -298,7 +303,7 @@ Authorization: Bearer <token>
 
 **Codigos de estado posibles:** `200`, `401`, `403`, `404`, `500`.
 
-**Observaciones tecnicas:** el campo `after` permite sincronizacion incremental. Debe marcar lectura en una transaccion separada o mediante endpoint dedicado si se requiere control estricto.
+**Observaciones tecnicas:** el campo `after` permite sincronizacion incremental. Los mensajes del docente con `target_id_parent` solo deben mostrarse al padre destinatario.
 El backend debe calcular `isFromParent` comparando el remitente con el padre autenticado.
 
 **Pantalla/componente movil:** bloque `Comunicacion de la citacion` en `CitationsScreen`.
@@ -444,9 +449,54 @@ Authorization: Bearer <token>
 
 **Pantalla/componente movil:** icono de notificaciones del `AppBar`.
 
+## 9. Revision web de justificacion
+
+**Nombre:** Revisar justificacion de rechazo
+**Metodo HTTP:** `POST`
+**Ruta web:** `/citations/{citationId}/recipients/{recipientId}/justification`
+
+**Descripcion funcional:** permite que el profesor marque la razon de rechazo enviada por el padre como justificada o no justificada.
+
+**Request esperado:**
+
+```http
+POST /citations/101/recipients/33/justification
+Content-Type: application/x-www-form-urlencoded
+
+status=not_justified&parentId=1
+```
+
+**Valores permitidos:** `justified`, `not_justified`.
+
+**Efecto esperado:**
+
+- Actualiza `citation_recipients.justification_status`.
+- Registra `citation_recipients.justification_reviewed_at`.
+- Si el estado es `not_justified`, inserta automaticamente un mensaje docente dirigido al padre mediante `citation_messages.target_id_parent`.
+
+**Pantalla/componente web:** detalle de citacion, bloque `Resumen de respuestas`.
+
+## 10. Comunicacion web por contacto
+
+**Nombre:** Conversacion docente-padre por citacion
+**Metodo HTTP:** `GET`
+**Ruta web:** `/citations/{citationId}?parentId={parentId}`
+
+**Descripcion funcional:** muestra al profesor la lista de padres/contactos y la conversacion filtrada del padre seleccionado.
+
+**Datos renderizados:**
+
+- Nombre del padre.
+- Estudiante asociado.
+- Estado de la ultima citacion.
+- Ultimo mensaje.
+- Cantidad de mensajes de padre sin leer.
+
+**Pantalla/componente web:** detalle de citacion, bloque `Comunicacion bidireccional`.
+
 ## Tablas requeridas o propuestas
 
-Estas tablas se proponen si no existen en la base. No se aplican migraciones en este cambio porque el alcance indica no modificar `web-app`.
+Estas tablas existen o quedan completadas por las migraciones de `web-app` para PMV3.
 
 ## `virtual_citations`
 
@@ -484,6 +534,8 @@ Finalidad: guardar el estado de cada padre destinatario.
 | `id_student` | INT NOT NULL | FK `students.id_student` | Estudiante asociado |
 | `recipient_status` | VARCHAR(20) |  | `pending`, `accepted`, `rejected`, `confirmed` |
 | `response_reason` | TEXT NULL |  | Motivo de rechazo |
+| `justification_status` | VARCHAR(20) NULL |  | `pending_review`, `justified`, `not_justified` |
+| `justification_reviewed_at` | DATETIME NULL |  | Fecha de revision docente |
 | `read_at` | DATETIME NULL |  | Lectura |
 | `responded_at` | DATETIME NULL |  | Aceptacion/rechazo |
 | `confirmed_at` | DATETIME NULL |  | Confirmacion |
@@ -501,6 +553,7 @@ Finalidad: soportar comunicacion bidireccional dentro de cada citacion.
 | `id_citation` | INT NOT NULL | FK `virtual_citations.id_citation` | Citacion |
 | `sender_type` | VARCHAR(20) |  | `parent`, `user`, `system` |
 | `sender_id` | INT NOT NULL |  | ID del padre o usuario |
+| `target_id_parent` | INT NULL | FK `parents.id_parent` | Padre destinatario cuando el mensaje docente no es masivo |
 | `body` | TEXT NOT NULL |  | Mensaje |
 | `sent_at` | DATETIME |  | Envio |
 | `read_at` | DATETIME NULL |  | Lectura del receptor |
@@ -546,6 +599,8 @@ Relacion: usado por backend/docente para RF14. La app movil de padres no lo rend
 | Aceptar/rechazar | Preparado con `respondToCitation` |
 | Confirmar citacion | Preparado con `confirmCitation` |
 | Comunicacion bidireccional | Preparado con `loadCitationMessages` y `sendCitationMessage` |
-| Trazabilidad | Contrato y tabla propuesta (`citation_events`) |
+| Resumen web docente | Implementado con conteo de aceptados, rechazados y pendientes |
+| Revision de justificaciones | Implementada con `justification_status` y mensaje automatico si no procede |
+| Trazabilidad | Conservada como soporte tecnico en `citation_events`, ya no como seccion principal |
 | Citaciones masivas | Contrato cubierto por `scope` y `citation_recipients` |
-| Web-app | Sin cambios requeridos ni aplicados |
+| Web-app | Conectado a procedimientos y tablas reales de PMV3 |

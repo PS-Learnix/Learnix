@@ -224,6 +224,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
   void _openReminders(BuildContext context, ParentDashboardData data) {
     final reminders = _controller.reminders(data);
+    final hasCitationReminders =
+        reminders.any((item) => item.category == AlertCategory.citation);
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -248,6 +250,23 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 ),
         ),
         actions: [
+          if (hasCitationReminders)
+            TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => CitationsScreen(
+                      repository: widget.repository,
+                      parentId: 1,
+                      studentId: data.student.id,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.event_note_outlined),
+              label: const Text('Gestionar citaciones'),
+            ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cerrar'),

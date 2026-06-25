@@ -40,13 +40,29 @@ public class WebCitationService {
         return webCitationRepository.getCitationRecipients(citationId);
     }
 
-    public List<CitationMessageDto> getCitationMessages(Integer citationId, String after) {
-        return webCitationRepository.getCitationMessages(citationId, after);
+    public Map<String, Object> getCitationResponseSummary(Integer citationId) {
+        return webCitationRepository.getCitationResponseSummary(citationId);
+    }
+
+    public List<Map<String, Object>> getCommunicationContacts(Integer citationId) {
+        return webCitationRepository.getCommunicationContacts(citationId);
+    }
+
+    public List<CitationMessageDto> getCitationMessages(Integer citationId, Integer parentId, String after) {
+        return webCitationRepository.getCitationMessages(citationId, parentId, after);
     }
 
     @Transactional
-    public CitationMessageDto sendTeacherMessage(Integer citationId, String body, Integer teacherId) {
-        return webCitationRepository.sendTeacherMessage(citationId, body, teacherId);
+    public CitationMessageDto sendTeacherMessage(Integer citationId, String body, Integer teacherId, Integer parentId) {
+        return webCitationRepository.sendTeacherMessage(citationId, body, teacherId, parentId);
+    }
+
+    @Transactional
+    public void reviewJustification(Integer citationId, Integer recipientId, Integer teacherId, String reviewStatus) {
+        if (!"justified".equals(reviewStatus) && !"not_justified".equals(reviewStatus)) {
+            throw new IllegalArgumentException("Estado de justificacion no valido.");
+        }
+        webCitationRepository.reviewJustification(citationId, recipientId, teacherId, reviewStatus);
     }
 
     @Transactional

@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle de Citación - Learnix</title>
+    <title>Detalle de Citacion - Learnix</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
     <style>
         .sidebar-panel { background-color: white; border-radius: 2.5rem; width: 100px; height: calc(100vh - 2rem); }
         .main-panel { background-color: white; border-radius: 2.5rem; height: calc(100vh - 2rem); overflow-y: auto; }
         .nav-btn { width: 60px; height: 60px; border-radius: 1.2rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; text-decoration: none; }
         .panel-container { border-radius: 2rem; border: 1px solid #f1f5f9; background-color: white; }
-        .chat-container { border: 1px solid #e2e8f0; border-radius: 1.5rem; height: 400px; overflow-y: auto; background-color: #f8fafc; padding: 1.5rem; }
-        .chat-bubble { max-width: 75%; border-radius: 1rem; padding: 0.8rem 1.2rem; margin-bottom: 1rem; }
+        .chat-container { border: 1px solid #e2e8f0; border-radius: 1.5rem; height: 390px; overflow-y: auto; background-color: #f8fafc; padding: 1.5rem; }
+        .chat-bubble { max-width: 78%; border-radius: 1rem; padding: 0.8rem 1.2rem; margin-bottom: 1rem; }
         .bubble-teacher { background-color: #3b82f6; color: white; margin-left: auto; border-bottom-right-radius: 0.2rem; }
         .bubble-parent { background-color: white; border: 1px solid #e2e8f0; color: #1e293b; margin-right: auto; border-bottom-left-radius: 0.2rem; }
         .bubble-system { background-color: #f1f5f9; color: #64748b; font-size: 0.85rem; text-align: center; margin: 1rem auto; width: fit-content; border-radius: 0.5rem; padding: 0.4rem 0.8rem; }
-        .timeline-item { position: relative; padding-left: 1.5rem; border-left: 2px solid #e2e8f0; padding-bottom: 1.5rem; }
-        .timeline-item::before { content: ''; position: absolute; left: -6px; top: 0; width: 10px; height: 10px; border-radius: 50%; background-color: #3b82f6; }
+        .contact-list { max-height: 500px; overflow-y: auto; }
     </style>
 </head>
 <body class="bg-light p-3">
@@ -27,13 +26,13 @@
     <main class="main-panel flex-grow-1 p-4 shadow-sm border bg-white">
         <div class="mb-4 d-flex justify-content-between align-items-start">
             <div>
-                <a th:href="@{/citations}" class="text-primary fw-bold text-decoration-none">← Volver a Citaciones</a>
-                <h2 class="fw-black text-dark mt-2" th:text="${citation.title}">Título</h2>
-                <small class="text-muted fw-bold text-uppercase">PMV3 Detalle de Acompañamiento Escolar</small>
+                <a th:href="@{/citations}" class="text-primary fw-bold text-decoration-none">&larr; Volver a Citaciones</a>
+                <h2 class="fw-black text-dark mt-2" th:text="${citation.title}">Titulo</h2>
+                <small class="text-muted fw-bold text-uppercase">PMV3 Detalle de acompanamiento escolar</small>
             </div>
             <div th:if="${citation.status != 'cancelled'}">
-                <form th:action="@{/citations/{id}/cancel(id=${citation.id})}" method="post" onsubmit="return confirm('¿Está seguro de que desea cancelar esta citación? Esta acción es irreversible.');">
-                    <button type="submit" class="btn btn-outline-danger px-4 py-2 rounded-pill fw-bold">🚫 Cancelar Citación</button>
+                <form th:action="@{/citations/{id}/cancel(id=${citation.id})}" method="post" onsubmit="return confirm('Esta seguro de que desea cancelar esta citacion?');">
+                    <button type="submit" class="btn btn-outline-danger px-4 py-2 rounded-pill fw-bold">Cancelar citacion</button>
                 </form>
             </div>
         </div>
@@ -42,12 +41,11 @@
         <div th:if="${success}" class="alert alert-success rounded-3 mb-4 shadow-sm" role="alert" th:text="${success}"></div>
 
         <div class="row g-4 mb-4">
-            <!-- Left Info Panel -->
             <div class="col-lg-4">
                 <div class="panel-container shadow-sm p-4 mb-4">
-                    <h5 class="fw-bold mb-3 text-secondary">Ficha Técnica</h5>
+                    <h5 class="fw-bold mb-3 text-secondary">Ficha tecnica</h5>
                     <div class="mb-3">
-                        <small class="text-muted d-block text-uppercase fw-bold text-xs">Fecha Programada</small>
+                        <small class="text-muted d-block text-uppercase fw-bold text-xs">Fecha programada</small>
                         <span class="fs-5 fw-bold text-dark" th:text="${citation.scheduledAt}">-</span>
                     </div>
                     <div class="mb-3">
@@ -55,37 +53,78 @@
                         <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-3 py-1 rounded-pill fw-bold" th:text="${citation.mode == 'virtual' ? 'Virtual' : 'Presencial'}">Virtual</span>
                     </div>
                     <div class="mb-3" th:if="${citation.mode == 'virtual' && citation.meetingUrl != null}">
-                        <small class="text-muted d-block text-uppercase fw-bold text-xs">Enlace de Videollamada</small>
-                        <a th:href="${citation.meetingUrl}" target="_blank" class="text-primary text-decoration-none fw-semibold text-break" th:text="${citation.meetingUrl}">https://meet.google.com...</a>
+                        <small class="text-muted d-block text-uppercase fw-bold text-xs">Enlace de videollamada</small>
+                        <a th:href="${citation.meetingUrl}" target="_blank" class="text-primary text-decoration-none fw-semibold text-break" th:text="${citation.meetingUrl}">https://meet.google.com</a>
                     </div>
                     <div class="mb-3">
-                        <small class="text-muted d-block text-uppercase fw-bold text-xs">Estado Global</small>
+                        <small class="text-muted d-block text-uppercase fw-bold text-xs">Estado global</small>
                         <span class="badge rounded-pill px-3 py-1 fw-bold"
                               th:classappend="${citation.status == 'cancelled' ? 'bg-danger text-white' : 'bg-success text-white'}"
-                              th:text="${citation.status == 'cancelled' ? 'CANCELADA' : 'ACTIVA / AGENDADA'}">-</span>
+                              th:text="${citation.status == 'cancelled' ? 'Cancelada' : 'Activa'}">Activa</span>
                     </div>
                     <hr>
-                    <div>
-                        <small class="text-muted d-block text-uppercase fw-bold text-xs mb-2">Detalle de la Citación</small>
-                        <p class="text-secondary fw-medium" th:text="${citation.detail}">Detalle de la cita...</p>
-                    </div>
+                    <small class="text-muted d-block text-uppercase fw-bold text-xs mb-2">Detalle</small>
+                    <p class="text-secondary fw-medium" th:text="${citation.detail}">Detalle de la cita</p>
                 </div>
 
-                <!-- Recipient list panel -->
                 <div class="panel-container shadow-sm p-4">
-                    <h5 class="fw-bold mb-3 text-secondary" th:text="'Destinatarios (' + ${#lists.size(recipients)} + ')'">Destinatarios</h5>
+                    <h5 class="fw-bold mb-3 text-secondary">Resumen de respuestas</h5>
+                    <div class="row g-2 mb-4">
+                        <div class="col-4">
+                            <div class="border rounded-3 p-3 text-center bg-success bg-opacity-10">
+                                <div class="fs-4 fw-black text-success" th:text="${responseSummary.acceptedCount}">0</div>
+                                <small class="text-success fw-bold">Aceptaron</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded-3 p-3 text-center bg-danger bg-opacity-10">
+                                <div class="fs-4 fw-black text-danger" th:text="${responseSummary.rejectedCount}">0</div>
+                                <small class="text-danger fw-bold">Rechazaron</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded-3 p-3 text-center bg-warning bg-opacity-10">
+                                <div class="fs-4 fw-black text-warning" th:text="${responseSummary.pendingCount}">0</div>
+                                <small class="text-warning fw-bold">Pendientes</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-3 text-secondary" th:text="'Padres (' + ${#lists.size(recipients)} + ')'">Padres</h6>
                     <div class="d-flex flex-column gap-3">
                         <div class="border rounded-3 p-3 bg-light bg-opacity-50" th:each="rec : ${recipients}">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <span class="fw-bold text-dark" th:text="${rec.studentName}">Alumno</span>
                                 <span class="badge rounded-pill text-xs px-2 py-1"
                                       th:classappend="${rec.status == 'accepted' ? 'bg-success text-white' : (rec.status == 'confirmed' ? 'bg-primary text-white' : (rec.status == 'rejected' ? 'bg-danger text-white' : 'bg-warning text-dark'))}"
-                                      th:text="${rec.status}">Pendiente</span>
+                                      th:text="${rec.status == 'accepted' ? 'Aceptado' : (rec.status == 'confirmed' ? 'Confirmado' : (rec.status == 'rejected' ? 'Rechazado' : 'Pendiente'))}">Pendiente</span>
                             </div>
                             <div class="text-secondary text-xs mb-2" th:text="'Apoderado: ' + ${rec.parentName}">Apoderado</div>
-                            <div class="alert alert-warning p-2 text-xs m-0 border-warning-subtle rounded-3" th:if="${rec.reason != null && !rec.reason.isEmpty()}" th:text="'Motivo: ' + ${rec.reason}">Motivo rechazo</div>
+
+                            <div class="alert alert-warning p-2 text-xs m-0 border-warning-subtle rounded-3" th:if="${rec.reason != null && !rec.reason.isEmpty()}">
+                                <div class="fw-bold mb-1">Justificacion del rechazo</div>
+                                <div th:text="${rec.reason}">Motivo rechazo</div>
+                                <div class="mt-2" th:if="${rec.justificationStatus != null}">
+                                    <span class="badge rounded-pill"
+                                          th:classappend="${rec.justificationStatus == 'justified' ? 'bg-success' : (rec.justificationStatus == 'not_justified' ? 'bg-danger' : 'bg-secondary')}"
+                                          th:text="${rec.justificationStatus == 'justified' ? 'Justificada' : (rec.justificationStatus == 'not_justified' ? 'No justificada' : 'Pendiente de revision')}">Pendiente</span>
+                                </div>
+                                <div class="d-flex gap-2 mt-2">
+                                    <form th:action="@{/citations/{id}/recipients/{recipientId}/justification(id=${citation.id}, recipientId=${rec.idRecipient})}" method="post">
+                                        <input type="hidden" name="status" value="justified">
+                                        <input type="hidden" name="parentId" th:value="${rec.parentId}">
+                                        <button type="submit" class="btn btn-sm btn-outline-success rounded-pill">Justificada</button>
+                                    </form>
+                                    <form th:action="@{/citations/{id}/recipients/{recipientId}/justification(id=${citation.id}, recipientId=${rec.idRecipient})}" method="post">
+                                        <input type="hidden" name="status" value="not_justified">
+                                        <input type="hidden" name="parentId" th:value="${rec.parentId}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">No justificada</button>
+                                    </form>
+                                </div>
+                            </div>
+
                             <div class="text-muted text-xs mt-2" style="font-size: 0.75rem;">
-                                <span class="d-block" th:if="${rec.readAt != null}" th:text="'Leído: ' + ${rec.readAt}">-</span>
+                                <span class="d-block" th:if="${rec.readAt != null}" th:text="'Leido: ' + ${rec.readAt}">-</span>
                                 <span class="d-block" th:if="${rec.respondedAt != null}" th:text="'Respondido: ' + ${rec.respondedAt}">-</span>
                                 <span class="d-block" th:if="${rec.confirmedAt != null}" th:text="'Confirmado: ' + ${rec.confirmedAt}">-</span>
                             </div>
@@ -94,54 +133,57 @@
                 </div>
             </div>
 
-            <!-- Right Communication and Timeline Panels -->
             <div class="col-lg-8">
-                <!-- Chat panel -->
-                <div class="panel-container shadow-sm p-4 mb-4">
-                    <h5 class="fw-bold mb-3 text-secondary">Canal de Comunicación Bidireccional</h5>
-                    <div class="chat-container mb-3" id="chatContainer">
-                        <div th:each="msg : ${messages}">
-                            <!-- Parent bubble -->
-                            <div class="chat-bubble bubble-parent" th:if="${msg.isFromParent}">
-                                <div class="fw-bold text-xs mb-1" th:text="${msg.senderName} + ' (' + ${msg.senderRole} + ')'">Padre</div>
-                                <div th:text="${msg.body}">Mensaje</div>
-                                <small class="d-block text-end text-muted mt-1" style="font-size: 0.7rem;" th:text="${msg.sentAt}">10:30</small>
-                            </div>
-                            <!-- Teacher bubble -->
-                            <div class="chat-bubble bubble-teacher" th:if="${!msg.isFromParent && msg.senderRole == 'Docente'}">
-                                <div class="fw-bold text-xs mb-1" th:text="${msg.senderName} + ' (Docente)'">Docente</div>
-                                <div th:text="${msg.body}">Mensaje</div>
-                                <small class="d-block text-end text-white-50 mt-1" style="font-size: 0.7rem;" th:text="${msg.sentAt}">10:30</small>
-                            </div>
-                            <!-- System bubble -->
-                            <div class="bubble-system" th:if="${!msg.isFromParent && msg.senderRole != 'Docente'}" th:text="${msg.body}">Mensaje del sistema</div>
-                        </div>
-                        <div th:if="${#lists.isEmpty(messages)}" class="text-center text-muted p-5">
-                            Comienza la conversación enviando un mensaje abajo.
-                        </div>
-                    </div>
-
-                    <div th:if="${citation.status != 'cancelled'}">
-                        <form th:action="@{/citations/{id}/messages(id=${citation.id})}" method="post">
-                            <div class="input-group">
-                                <input type="text" class="form-control rounded-start-pill p-3 border-end-0" name="body" placeholder="Escriba su mensaje aquí..." required>
-                                <button type="submit" class="btn btn-primary rounded-end-pill px-4">Enviar ✉</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Timeline / Events panel -->
                 <div class="panel-container shadow-sm p-4">
-                    <h5 class="fw-bold mb-4 text-secondary">Trazabilidad de Eventos</h5>
-                    <div class="ps-2">
-                        <div class="timeline-item" th:each="ev : ${events}">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-bold text-dark" th:text="${ev.eventType.toUpperCase()}">CREATED</span>
-                                <small class="text-muted" th:text="${ev.createdAt}">Fecha</small>
+                    <h5 class="fw-bold mb-3 text-secondary">Comunicacion bidireccional</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="contact-list d-flex flex-column gap-2">
+                                <a th:each="contact : ${contacts}"
+                                   th:href="@{/citations/{id}(id=${citation.id}, parentId=${contact.parentId})}"
+                                   class="border rounded-3 p-3 text-decoration-none"
+                                   th:classappend="${contact.parentId == selectedParentId ? 'bg-primary bg-opacity-10 border-primary' : 'bg-light'}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold text-dark" th:text="${contact.parentName}">Padre</span>
+                                        <span class="badge bg-danger rounded-pill" th:if="${contact.unreadMessages > 0}" th:text="${contact.unreadMessages}">1</span>
+                                    </div>
+                                    <small class="text-secondary d-block" th:text="${contact.studentName}">Estudiante</small>
+                                    <small class="text-muted d-block" th:text="'Estado: ' + ${contact.status}">Estado</small>
+                                    <small class="text-muted d-block text-truncate" th:text="${contact.lastMessage != null ? contact.lastMessage : 'Sin mensajes'}">Ultimo mensaje</small>
+                                </a>
+                                <div class="text-muted text-center p-3" th:if="${#lists.isEmpty(contacts)}">No hay contactos asociados.</div>
                             </div>
-                            <p class="text-secondary m-0 mt-1" th:text="${ev.actorName} + ' (' + ${ev.actorRole} + ')'">Actor</p>
-                            <small class="text-muted font-monospace d-block mt-1" th:if="${ev.payload != null}" th:text="${ev.payload}"></small>
+                        </div>
+
+                        <div class="col-md-8">
+                            <div class="chat-container mb-3" id="chatContainer">
+                                <div th:each="msg : ${messages}">
+                                    <div class="chat-bubble bubble-parent" th:if="${msg.isFromParent}">
+                                        <div class="fw-bold text-xs mb-1" th:text="${msg.senderName} + ' (' + ${msg.senderRole} + ')'">Padre</div>
+                                        <div th:text="${msg.body}">Mensaje</div>
+                                        <small class="d-block text-end text-muted mt-1" style="font-size: 0.7rem;" th:text="${msg.sentAt}">10:30</small>
+                                    </div>
+                                    <div class="chat-bubble bubble-teacher" th:if="${!msg.isFromParent && msg.senderRole == 'Docente'}">
+                                        <div class="fw-bold text-xs mb-1" th:text="${msg.senderName} + ' (Docente)'">Docente</div>
+                                        <div th:text="${msg.body}">Mensaje</div>
+                                        <small class="d-block text-end text-white-50 mt-1" style="font-size: 0.7rem;" th:text="${msg.sentAt}">10:30</small>
+                                    </div>
+                                    <div class="bubble-system" th:if="${!msg.isFromParent && msg.senderRole != 'Docente'}" th:text="${msg.body}">Mensaje del sistema</div>
+                                </div>
+                                <div th:if="${#lists.isEmpty(messages)}" class="text-center text-muted p-5">
+                                    Seleccione un contacto o escriba el primer mensaje.
+                                </div>
+                            </div>
+
+                            <div th:if="${citation.status != 'cancelled' && selectedParentId != null}">
+                                <form th:action="@{/citations/{id}/messages(id=${citation.id})}" method="post">
+                                    <input type="hidden" name="parentId" th:value="${selectedParentId}">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control rounded-start-pill p-3 border-end-0" name="body" placeholder="Escriba su mensaje aqui..." required>
+                                        <button type="submit" class="btn btn-primary rounded-end-pill px-4">Enviar</button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -151,10 +193,11 @@
 </div>
 
 <script>
-    // Scroll chat to bottom
     window.onload = function() {
         var chatDiv = document.getElementById("chatContainer");
-        chatDiv.scrollTop = chatDiv.scrollHeight;
+        if (chatDiv) {
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
     }
 </script>
 

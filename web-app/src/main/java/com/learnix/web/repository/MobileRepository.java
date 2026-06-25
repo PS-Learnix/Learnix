@@ -407,12 +407,12 @@ public class MobileRepository extends BaseProcedureRepository {
     }
 
     public CitationMessageDto sendCitationMessage(Integer citationId, String body, Integer parentId) {
-        Map<String, Object> inParams = Map.of(
-                "p_id_citation", citationId,
-                "p_sender_type", "parent",
-                "p_sender_id", parentId,
-                "p_body", body
-        );
+        Map<String, Object> inParams = new HashMap<>();
+        inParams.put("p_id_citation", citationId);
+        inParams.put("p_sender_type", "parent");
+        inParams.put("p_sender_id", parentId);
+        inParams.put("p_body", body);
+        inParams.put("p_target_id_parent", null);
         List<CitationMessageDto> list = executeAndConvertList(sendCitationMessageCall, CitationMessageDto.class, inParams, "sendMessageResult");
         return list.isEmpty() ? null : list.get(0);
     }

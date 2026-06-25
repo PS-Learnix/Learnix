@@ -74,6 +74,11 @@ class CitationController extends ChangeNotifier {
   }
 
   Future<void> rejectSelected(String reason) {
+    if (reason.trim().isEmpty) {
+      _error = 'Debe escribir una razon para rechazar la citacion.';
+      _safeNotifyListeners();
+      return Future<void>.value();
+    }
     return _updateSelected(CitationStatus.rejected, reason: reason);
   }
 
