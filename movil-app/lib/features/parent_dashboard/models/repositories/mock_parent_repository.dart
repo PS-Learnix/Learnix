@@ -95,7 +95,7 @@ class MockParentRepository implements ParentRepository {
       student: const StudentSummary(
         id: 1,
         fullName: 'Juan Perez',
-        gradeSection: '3ro A',
+        gradeSection: 'A',
         generalAverage: 17,
         attendancePercentage: 92,
         status: AcademicStatus.good,

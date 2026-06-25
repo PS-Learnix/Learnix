@@ -149,11 +149,32 @@ public class WebCitationRepository extends BaseProcedureRepository {
     }
 
     public CitationDto getCitationDetail(Integer citationId, Integer teacherId) {
-        Map<String, Object> inParams = Map.of(
-                "p_id_citation", citationId,
-                "p_id_parent", 0
-        );
-        List<CitationDto> list = executeAndConvertList(getCitationDetailCall, CitationDto.class, inParams, "citationDetail");
+        String sql = """
+                SELECT
+                    vc.id_citation AS id,
+                    vc.title AS title,
+                    vc.detail AS detail,
+                    CONCAT(u.first_name, ' ', u.last_name) AS teacherName,
+                    vc.scheduled_at AS scheduledAt,
+                    vc.global_status AS status,
+                    vc.mode AS mode,
+                    vc.meeting_url AS meetingUrl
+                FROM virtual_citations vc
+                LEFT JOIN users u ON vc.id_teacher = u.id_user
+                WHERE vc.id_citation = ? AND vc.id_teacher = ?
+                """;
+        List<CitationDto> list = jdbcTemplate.query(sql, (rs, rowNum) -> new CitationDto(
+                rs.getInt("id"),
+                rs.getString("title"),
+                rs.getString("detail"),
+                rs.getString("teacherName"),
+                rs.getTimestamp("scheduledAt") != null ? rs.getTimestamp("scheduledAt").toInstant().toString().substring(0, 19) : null,
+                rs.getString("status"),
+                rs.getString("mode"),
+                rs.getString("meetingUrl"),
+                null,
+                null
+        ), citationId, teacherId);
         return list.isEmpty() ? null : list.get(0);
     }
 
@@ -171,11 +192,44 @@ public class WebCitationRepository extends BaseProcedureRepository {
     }
 
     public List<CitationMessageDto> getCitationMessages(Integer citationId, String after) {
-        Map<String, Object> inParams = new HashMap<>();
-        inParams.put("p_id_citation", citationId);
-        inParams.put("p_id_parent", 0);
-        inParams.put("p_after", after != null ? Timestamp.valueOf(LocalDateTime.parse(after)) : null);
-        return executeAndConvertList(getCitationMessagesCall, CitationMessageDto.class, inParams, "messagesList");
+        Timestamp afterTimestamp = after != null ? Timestamp.valueOf(LocalDateTime.parse(after)) : null;
+        jdbcTemplate.update(
+                "UPDATE citation_messages SET read_at = NOW() WHERE id_citation = ? AND sender_type = 'parent' AND read_at IS NULL",
+                citationId
+        );
+        String sql = """
+                SELECT
+                    cm.id_message AS id,
+                    cm.id_citation AS citationId,
+                    CASE cm.sender_type
+                        WHEN 'parent' THEN (SELECT CONCAT(first_name, ' ', last_name) FROM parents WHERE id_parent = cm.sender_id)
+                        WHEN 'user' THEN (SELECT CONCAT(first_name, ' ', last_name) FROM users WHERE id_user = cm.sender_id)
+                        ELSE 'Sistema'
+                    END AS senderName,
+                    CASE cm.sender_type
+                        WHEN 'parent' THEN 'Padre'
+                        WHEN 'user' THEN 'Docente'
+                        ELSE 'Sistema'
+                    END AS senderRole,
+                    cm.body AS body,
+                    cm.sent_at AS sentAt,
+                    (cm.sender_type = 'parent') AS isFromParent,
+                    (cm.read_at IS NOT NULL) AS isRead
+                FROM citation_messages cm
+                WHERE cm.id_citation = ?
+                  AND (? IS NULL OR cm.sent_at > ?)
+                ORDER BY cm.sent_at ASC
+                """;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new CitationMessageDto(
+                rs.getInt("id"),
+                rs.getInt("citationId"),
+                rs.getString("senderName"),
+                rs.getString("senderRole"),
+                rs.getString("body"),
+                rs.getTimestamp("sentAt") != null ? rs.getTimestamp("sentAt").toInstant().toString().substring(0, 19) : null,
+                rs.getBoolean("isFromParent"),
+                rs.getBoolean("isRead")
+        ), citationId, afterTimestamp, afterTimestamp);
     }
 
     public CitationMessageDto sendTeacherMessage(Integer citationId, String body, Integer teacherId) {

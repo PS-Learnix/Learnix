@@ -21,10 +21,17 @@ La app movil quedo preparada con `Citation`, `CitationMessage`, `CitationControl
 - La confirmacion movil envia un body explicito `{ "confirmed": true }`.
 - La app conserva `parentId = 1` como fallback provisional para el login mock; en backend real debe reemplazarse por el `parent.id` retornado por autenticacion o validarse desde el token.
 - La pantalla `CitationsScreen` ya contempla carga, seleccion, respuesta, confirmacion y mensajeria bidireccional. El controlador evita notificaciones de estado despues de cerrar la vista.
+- La vista web docente debe leer `virtual_citations.global_status`; la app movil de padres debe leer `citation_recipients.recipient_status`. No deben reutilizar el mismo significado de `status`.
+- En la vista web docente, los mensajes con `sender_type = parent` se consideran mensajes entrantes del padre; en la app movil, `isFromParent` se calcula contra el padre autenticado.
 
 ## Convenciones
 
 - Base path sugerido: `/api/mobile`
+- URL base en Flutter:
+  - Por defecto en Flutter Web/desktop: `http://localhost:8080`
+  - Por defecto en Android emulator: `http://10.0.2.2:8080`
+  - Se puede sobrescribir con `--dart-define=LEARNIX_API_BASE_URL=<url>`
+- El backend `web-app` debe permitir CORS para `/api/mobile/**` cuando se pruebe desde Flutter Web o desde un cliente móvil en desarrollo.
 - Autenticacion: `Authorization: Bearer <token>`
 - Fechas: ISO 8601 (`YYYY-MM-DDTHH:mm:ss`)
 - Estados moviles de receptor: `pending`, `accepted`, `rejected`, `confirmed`, `cancelled`

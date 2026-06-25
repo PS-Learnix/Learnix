@@ -6,7 +6,22 @@ import '../parent_models.dart';
 import 'parent_repository.dart';
 
 class HttpParentRepository implements ParentRepository {
-  final String baseUrl = 'https://learnix.yoshua-cloud.dedyn.io';
+  HttpParentRepository({String? baseUrl}) : baseUrl = baseUrl ?? _defaultBaseUrl;
+
+  static const String _configuredBaseUrl = String.fromEnvironment(
+    'LEARNIX_API_BASE_URL',
+  );
+
+  static String get _defaultBaseUrl {
+    if (_configuredBaseUrl.isNotEmpty) return _configuredBaseUrl;
+    if (kIsWeb) return 'http://localhost:8080';
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8080';
+    }
+    return 'http://localhost:8080';
+  }
+
+  final String baseUrl;
 
   String? token;
   int? parentId;

@@ -179,7 +179,7 @@ Autentica al padre y devuelve el estudiante principal.
     {
       "id": 1,
       "fullName": "Juan Perez",
-      "gradeSection": "3ro A",
+      "gradeSection": "A",
       "isPrimary": true
     }
   ]
@@ -190,7 +190,7 @@ Autentica al padre y devuelve el estudiante principal.
 
 - Requiere `parents`.
 - Requiere `parent_students`.
-- Usa `students`.
+- Usa `students`, `enrollments` y `course_periods` para resolver la seccion matriculada.
 
 ## 2. Dashboard Inicial
 
@@ -217,7 +217,7 @@ Path params:
   "student": {
     "id": 1,
     "fullName": "Juan Perez",
-    "gradeSection": "3ro A",
+    "gradeSection": "A",
     "generalAverage": 17.0,
     "attendancePercentage": 92.0,
     "academicStatus": "good"
@@ -265,6 +265,8 @@ Path params:
 - Usa `activities`, `grades`.
 - Usa `attendances`.
 - Usa `academic_reports`.
+
+Nota: `student.gradeSection` debe calcularse desde las matriculas activas del estudiante (`enrollments.status = active`) y las secciones de `course_periods.section`. Formato esperado por la app: `A` o `A, B` si el estudiante aparece en mas de una seccion activa.
 
 Nota: el campo `term` no existe explicitamente en `activities`. Si se requiere persistencia real por bimestre, agregar:
 
@@ -589,7 +591,7 @@ Path params:
   "student": {
     "id": 1,
     "fullName": "Juan Perez",
-    "gradeSection": "3ro A"
+    "gradeSection": "A"
   },
   "announcementPreview": [
     {

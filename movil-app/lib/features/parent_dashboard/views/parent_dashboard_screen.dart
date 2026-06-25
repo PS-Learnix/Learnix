@@ -290,7 +290,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                       ?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 6),
-                Text('Grado y seccion: ${student.gradeSection}'),
+                Text('Seccion matriculada: ${student.gradeSection}'),
               ],
             ),
           ),
