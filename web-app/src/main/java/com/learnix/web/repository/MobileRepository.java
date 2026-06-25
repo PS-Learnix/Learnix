@@ -34,6 +34,13 @@ public class MobileRepository extends BaseProcedureRepository {
     private SimpleJdbcCall markAnnouncementReadCall;
     private SimpleJdbcCall getStudentReportsCall;
     private SimpleJdbcCall updateParentPreferencesCall;
+    private SimpleJdbcCall getParentStudentCitationsCall;
+    private SimpleJdbcCall getCitationDetailCall;
+    private SimpleJdbcCall respondToCitationCall;
+    private SimpleJdbcCall confirmCitationCall;
+    private SimpleJdbcCall getCitationMessagesCall;
+    private SimpleJdbcCall sendCitationMessageCall;
+    private SimpleJdbcCall getCitationEventsCall;
 
     public MobileRepository(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper) {
         super(jdbcTemplate, objectMapper);
@@ -128,6 +135,109 @@ public class MobileRepository extends BaseProcedureRepository {
                         rs.getInt("parentId"),
                         rs.getBoolean("darkMode"),
                         rs.getTimestamp("updatedAt") != null ? rs.getTimestamp("updatedAt").toInstant().toString() : null
+                ));
+
+        this.getParentStudentCitationsCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("sp_get_parent_student_citations")
+                .returningResultSet("citationsList", (rs, rowNum) -> new CitationDto(
+                        rs.getInt("id"),
+                        rs.getString("title"),
+                        rs.getString("detail"),
+                        rs.getString("teacherName"),
+                        rs.getTimestamp("scheduledAt") != null ? rs.getTimestamp("scheduledAt").toInstant().toString().substring(0, 19) : null,
+                        rs.getString("status"),
+                        rs.getString("mode"),
+                        rs.getString("meetingUrl"),
+                        rs.getString("scope"),
+                        rs.getInt("unreadMessages")
+                ));
+
+        this.getCitationDetailCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("sp_get_citation_detail")
+                .returningResultSet("citationDetail", (rs, rowNum) -> new CitationDto(
+                        rs.getInt("id"),
+                        rs.getString("title"),
+                        rs.getString("detail"),
+                        rs.getString("teacherName"),
+                        rs.getTimestamp("scheduledAt") != null ? rs.getTimestamp("scheduledAt").toInstant().toString().substring(0, 19) : null,
+                        rs.getString("status"),
+                        rs.getString("mode"),
+                        rs.getString("meetingUrl"),
+                        null,
+                        null
+                ));
+
+        this.respondToCitationCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("sp_respond_to_citation")
+                .returningResultSet("respondResult", (rs, rowNum) -> {
+                    CitationDto citation = new CitationDto(
+                        rs.getInt("id"),
+                        rs.getString("title"),
+                        rs.getString("detail"),
+                        rs.getString("teacherName"),
+                        rs.getTimestamp("scheduledAt") != null ? rs.getTimestamp("scheduledAt").toInstant().toString().substring(0, 19) : null,
+                        rs.getString("status"),
+                        rs.getString("mode"),
+                        rs.getString("meetingUrl"),
+                        null,
+                        null
+                    );
+                    return new RespondCitationResponse(citation, rs.getInt("eventId"));
+                });
+
+        this.confirmCitationCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("sp_confirm_citation")
+                .returningResultSet("confirmResult", (rs, rowNum) -> {
+                    CitationDto citation = new CitationDto(
+                        rs.getInt("id"),
+                        rs.getString("title"),
+                        rs.getString("detail"),
+                        rs.getString("teacherName"),
+                        rs.getTimestamp("scheduledAt") != null ? rs.getTimestamp("scheduledAt").toInstant().toString().substring(0, 19) : null,
+                        rs.getString("status"),
+                        rs.getString("mode"),
+                        rs.getString("meetingUrl"),
+                        null,
+                        null
+                    );
+                    return new ConfirmCitationResponse(citation, rs.getTimestamp("confirmedAt") != null ? rs.getTimestamp("confirmedAt").toInstant().toString().substring(0, 19) : null);
+                });
+
+        this.getCitationMessagesCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("sp_get_citation_messages")
+                .returningResultSet("messagesList", (rs, rowNum) -> new CitationMessageDto(
+                        rs.getInt("id"),
+                        rs.getInt("citationId"),
+                        rs.getString("senderName"),
+                        rs.getString("senderRole"),
+                        rs.getString("body"),
+                        rs.getTimestamp("sentAt") != null ? rs.getTimestamp("sentAt").toInstant().toString().substring(0, 19) : null,
+                        rs.getBoolean("isFromParent"),
+                        rs.getBoolean("isRead")
+                ));
+
+        this.sendCitationMessageCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("sp_send_citation_message")
+                .returningResultSet("sendMessageResult", (rs, rowNum) -> new CitationMessageDto(
+                        rs.getInt("id"),
+                        rs.getInt("citationId"),
+                        rs.getString("senderName"),
+                        rs.getString("senderRole"),
+                        rs.getString("body"),
+                        rs.getTimestamp("sentAt") != null ? rs.getTimestamp("sentAt").toInstant().toString().substring(0, 19) : null,
+                        rs.getBoolean("isFromParent"),
+                        rs.getBoolean("isRead")
+                ));
+
+        this.getCitationEventsCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("sp_get_citation_events")
+                .returningResultSet("eventsList", (rs, rowNum) -> new CitationEventDto(
+                        rs.getInt("id"),
+                        rs.getString("eventType"),
+                        rs.getString("actorName"),
+                        rs.getString("actorRole"),
+                        rs.getTimestamp("createdAt") != null ? rs.getTimestamp("createdAt").toInstant().toString().substring(0, 19) : null,
+                        rs.getString("payload")
                 ));
     }
 
@@ -248,5 +358,66 @@ public class MobileRepository extends BaseProcedureRepository {
         );
         List<PreferencesResponse> list = executeAndConvertList(updateParentPreferencesCall, PreferencesResponse.class, inParams, "prefResult");
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    public List<CitationDto> getParentStudentCitations(Integer parentId, Integer studentId, String status, String from, String to) {
+        Map<String, Object> inParams = new HashMap<>();
+        inParams.put("p_id_parent", parentId);
+        inParams.put("p_id_student", studentId);
+        inParams.put("p_status", status);
+        inParams.put("p_from", from != null ? Date.valueOf(from) : null);
+        inParams.put("p_to", to != null ? Date.valueOf(to) : null);
+        return executeAndConvertList(getParentStudentCitationsCall, CitationDto.class, inParams, "citationsList");
+    }
+
+    public CitationDto getCitationDetail(Integer citationId, Integer parentId) {
+        Map<String, Object> inParams = Map.of(
+                "p_id_citation", citationId,
+                "p_id_parent", parentId
+        );
+        List<CitationDto> list = executeAndConvertList(getCitationDetailCall, CitationDto.class, inParams, "citationDetail");
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    public RespondCitationResponse respondToCitation(Integer citationId, Integer parentId, String status, String reason) {
+        Map<String, Object> inParams = new HashMap<>();
+        inParams.put("p_id_citation", citationId);
+        inParams.put("p_id_parent", parentId);
+        inParams.put("p_status", status);
+        inParams.put("p_reason", reason);
+        List<RespondCitationResponse> list = executeAndConvertList(respondToCitationCall, RespondCitationResponse.class, inParams, "respondResult");
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    public ConfirmCitationResponse confirmCitation(Integer citationId, Integer parentId) {
+        Map<String, Object> inParams = Map.of(
+                "p_id_citation", citationId,
+                "p_id_parent", parentId
+        );
+        List<ConfirmCitationResponse> list = executeAndConvertList(confirmCitationCall, ConfirmCitationResponse.class, inParams, "confirmResult");
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    public List<CitationMessageDto> getCitationMessages(Integer citationId, Integer parentId, String after) {
+        Map<String, Object> inParams = new HashMap<>();
+        inParams.put("p_id_citation", citationId);
+        inParams.put("p_id_parent", parentId);
+        inParams.put("p_after", after != null ? java.sql.Timestamp.valueOf(java.time.LocalDateTime.parse(after)) : null);
+        return executeAndConvertList(getCitationMessagesCall, CitationMessageDto.class, inParams, "messagesList");
+    }
+
+    public CitationMessageDto sendCitationMessage(Integer citationId, String body, Integer parentId) {
+        Map<String, Object> inParams = Map.of(
+                "p_id_citation", citationId,
+                "p_sender_type", "parent",
+                "p_sender_id", parentId,
+                "p_body", body
+        );
+        List<CitationMessageDto> list = executeAndConvertList(sendCitationMessageCall, CitationMessageDto.class, inParams, "sendMessageResult");
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    public List<CitationEventDto> getCitationEvents(Integer citationId) {
+        return executeAndConvertList(getCitationEventsCall, CitationEventDto.class, "p_id_citation", citationId, "eventsList");
     }
 }

@@ -135,4 +135,141 @@ public class MobileParentController {
         PreferencesResponse response = mobileService.updatePreferences(parentId, request.darkMode());
         return ResponseEntity.ok(response);
     }
+
+    private Integer extractParentId(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return 1;
+        }
+        String token = authHeader.substring(7);
+        if (token.startsWith("jwt-token-parent-")) {
+            try {
+                String[] parts = token.split("-");
+                if (parts.length >= 4) {
+                    return Integer.parseInt(parts[3]);
+                }
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        }
+        return 1;
+    }
+
+    @GetMapping("/parents/{parentId}/students/{studentId}/citations")
+    public ResponseEntity<CitationListResponse> getCitations(
+            @PathVariable Integer parentId,
+            @PathVariable Integer studentId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to) {
+        CitationListResponse citations = mobileService.getParentStudentCitations(parentId, studentId, status, from, to);
+        return ResponseEntity.ok(citations);
+    }
+
+    @GetMapping("/citations/{citationId}")
+    public ResponseEntity<CitationDto> getCitationDetail(
+            @PathVariable Integer citationId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer parentId = extractParentId(authHeader);
+        CitationDto citation = mobileService.getCitationDetail(citationId, parentId);
+        if (citation == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(citation);
+    }
+
+    @PatchMapping("/citations/{citationId}/response")
+    public ResponseEntity<?> respondToCitation(
+            @PathVariable Integer citationId,
+            @RequestBody RespondCitationRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer parentId = extractParentId(authHeader);
+        if (request.status() == null) {
+            return ResponseEntity.badRequest().body(java.util.Map.of(
+                "code", "VALIDATION_ERROR",
+                "message", "El estado es requerido."
+            ));
+        }
+        try {
+            RespondCitationResponse response = mobileService.respondToCitation(citationId, parentId, request.status(), request.reason());
+            if (response == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(response);
+        } catch (org.springframework.jdbc.UncategorizedSQLException e) {
+            String msg = e.getSQLException() != null ? e.getSQLException().getMessage() : e.getMessage();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(
+                "code", "CONFLICT",
+                "message", msg != null ? msg : "Error al procesar la respuesta a la citación."
+            ));
+        }
+    }
+
+    @PatchMapping("/citations/{citationId}/confirm")
+    public ResponseEntity<?> confirmCitation(
+            @PathVariable Integer citationId,
+            @RequestBody ConfirmCitationRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer parentId = extractParentId(authHeader);
+        if (request.confirmed() == null || !request.confirmed()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of(
+                "code", "VALIDATION_ERROR",
+                "message", "Debe confirmar con confirmed = true."
+            ));
+        }
+        try {
+            ConfirmCitationResponse response = mobileService.confirmCitation(citationId, parentId);
+            if (response == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(response);
+        } catch (org.springframework.jdbc.UncategorizedSQLException e) {
+            String msg = e.getSQLException() != null ? e.getSQLException().getMessage() : e.getMessage();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(
+                "code", "CONFLICT",
+                "message", msg != null ? msg : "Error al confirmar la citación."
+            ));
+        }
+    }
+
+    @GetMapping("/citations/{citationId}/messages")
+    public ResponseEntity<CitationMessagesResponse> getCitationMessages(
+            @PathVariable Integer citationId,
+            @RequestParam(required = false) String after,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer parentId = extractParentId(authHeader);
+        CitationMessagesResponse messages = mobileService.getCitationMessages(citationId, parentId, after);
+        return ResponseEntity.ok(messages);
+    }
+
+    @PostMapping("/citations/{citationId}/messages")
+    public ResponseEntity<?> sendCitationMessage(
+            @PathVariable Integer citationId,
+            @RequestBody SendCitationMessageRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer parentId = extractParentId(authHeader);
+        if (request.body() == null || request.body().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of(
+                "code", "VALIDATION_ERROR",
+                "message", "El cuerpo del mensaje no puede estar vacío."
+            ));
+        }
+        try {
+            SendCitationMessageResponse response = mobileService.sendCitationMessage(citationId, request.body(), parentId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (org.springframework.jdbc.UncategorizedSQLException e) {
+            String msg = e.getSQLException() != null ? e.getSQLException().getMessage() : e.getMessage();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(
+                "code", "CONFLICT",
+                "message", msg != null ? msg : "Error al enviar el mensaje."
+            ));
+        }
+    }
+
+    @GetMapping("/citations/{citationId}/events")
+    public ResponseEntity<CitationEventsResponse> getCitationEvents(
+            @PathVariable Integer citationId) {
+        CitationEventsResponse events = mobileService.getCitationEvents(citationId);
+        return ResponseEntity.ok(events);
+    }
 }
+

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar Citación - Learnix</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        .sidebar-panel { background-color: white; border-radius: 2.5rem; width: 100px; height: calc(100vh - 2rem); }
+        .main-panel { background-color: white; border-radius: 2.5rem; height: calc(100vh - 2rem); overflow-y: auto; }
+        .nav-btn { width: 60px; height: 60px; border-radius: 1.2rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; text-decoration: none; }
+        .form-container { max-width: 700px; margin: 0 auto; border-radius: 2rem; border: 1px solid #e2e8f0; background-color: white; padding: 2.5rem; }
+    </style>
+</head>
+<body class="bg-light p-3">
+
+<div class="d-flex gap-3">
+    <aside th:replace="~{layout :: sidebar}"></aside>
+
+    <main class="main-panel flex-grow-1 p-4 shadow-sm border bg-white">
+        <div class="mb-4">
+            <a th:href="@{/citations}" class="text-primary fw-bold text-decoration-none">← Volver a Citaciones</a>
+            <h2 class="fw-black text-dark mt-2">Programar Nueva Citación</h2>
+            <small class="text-muted fw-bold text-uppercase">PMV3 Registro de Citación y Asignación de Destinatarios</small>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger rounded-3 mb-4 shadow-sm" role="alert" th:text="${error}"></div>
+
+        <div class="form-container shadow-sm">
+            <form th:action="@{/citations/create}" method="post">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Alcance de la citación (Scope)</label>
+                    <select class="form-select rounded-3 p-3" name="scope" id="scopeSelect" onchange="toggleScope()" required>
+                        <option value="individual">Individual (Un Estudiante y su Apoderado)</option>
+                        <option value="section">Por Sección (Todo un Grado/Sección)</option>
+                    </select>
+                </div>
+
+                <div class="mb-4" id="studentSelection">
+                    <label class="form-label fw-bold">Estudiante</label>
+                    <select class="form-select rounded-3 p-3" name="studentId" id="studentSelect">
+                        <option value="" disabled selected>Seleccione un estudiante...</option>
+                        <option th:each="st : ${students}" th:value="${st.id}" th:text="${st.fullName}"></option>
+                    </select>
+                </div>
+
+                <div class="mb-4 d-none" id="sectionSelection">
+                    <label class="form-label fw-bold">Grado y Sección</label>
+                    <select class="form-select rounded-3 p-3" name="coursePeriodId" id="sectionSelect">
+                        <option value="" disabled selected>Seleccione una sección...</option>
+                        <option th:each="sec : ${sections}" th:value="${sec.id}" th:text="${sec.name}"></option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Título / Asunto</label>
+                    <input type="text" class="form-control rounded-3 p-3" name="title" placeholder="Ej: Avance de Aprendizaje y Rendimiento" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Detalle / Motivo de la Citación</label>
+                    <textarea class="form-control rounded-3 p-3" name="detail" rows="4" placeholder="Redacte el motivo detallado de la citación..." required></textarea>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Modalidad</label>
+                        <select class="form-select rounded-3 p-3" name="mode" id="modeSelect" onchange="toggleUrl()" required>
+                            <option value="virtual">Virtual (Videollamada)</option>
+                            <option value="in_person">Presencial</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Fecha y Hora</label>
+                        <input type="datetime-local" class="form-control rounded-3 p-3" name="scheduledAt" required>
+                    </div>
+                </div>
+
+                <div class="mb-4" id="meetingUrlContainer">
+                    <label class="form-label fw-bold">Enlace de Videollamada (Meet / Zoom)</label>
+                    <input type="url" class="form-control rounded-3 p-3" name="meetingUrl" placeholder="https://meet.google.com/..." value="https://meet.learnix.edu/cita-virtual">
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary p-3 rounded-pill fw-bold fs-5">Agendar Citación</button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+    function toggleScope() {
+        var scope = document.getElementById("scopeSelect").value;
+        var studentDiv = document.getElementById("studentSelection");
+        var sectionDiv = document.getElementById("sectionSelection");
+        var studentSelect = document.getElementById("studentSelect");
+        var sectionSelect = document.getElementById("sectionSelect");
+
+        if (scope === "individual") {
+            studentDiv.classList.remove("d-none");
+            sectionDiv.classList.add("d-none");
+            studentSelect.required = true;
+            sectionSelect.required = false;
+        } else {
+            studentDiv.classList.add("d-none");
+            sectionDiv.classList.remove("d-none");
+            studentSelect.required = false;
+            sectionSelect.required = true;
+        }
+    }
+
+    function toggleUrl() {
+        var mode = document.getElementById("modeSelect").value;
+        var urlContainer = document.getElementById("meetingUrlContainer");
+        if (mode === "virtual") {
+            urlContainer.classList.remove("d-none");
+        } else {
+            urlContainer.classList.add("d-none");
+        }
+    }
+
+    // Run on load
+    window.onload = function() {
+        toggleScope();
+    }
+</script>
+
+</body>
+</html>

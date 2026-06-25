@@ -103,4 +103,57 @@ public class MobileDtos {
     public record PreferencesRequest(Boolean darkMode) {}
     
     public record PreferencesResponse(Integer parentId, Boolean darkMode, String updatedAt) {}
+
+    // 12. Citations PMV3
+    public record CitationDto(
+        Integer id,
+        String title,
+        String detail,
+        String teacherName,
+        String scheduledAt,
+        String status,
+        String mode,
+        String meetingUrl,
+        String scope,
+        Integer unreadMessages
+    ) {}
+
+    public record CitationListResponse(List<CitationDto> items) {}
+
+    public record RespondCitationRequest(String status, String reason) {}
+
+    public record RespondCitationResponse(CitationDto citation, Integer eventId) {}
+
+    public record ConfirmCitationRequest(Boolean confirmed) {}
+
+    public record ConfirmCitationResponse(CitationDto citation, String confirmedAt) {}
+
+    public record CitationMessageDto(
+        Integer id,
+        Integer citationId,
+        String senderName,
+        String senderRole,
+        String body,
+        String sentAt,
+        Boolean isFromParent,
+        Boolean isRead
+    ) {}
+
+    public record CitationMessagesResponse(List<CitationMessageDto> items) {}
+
+    public record SendCitationMessageRequest(String body) {}
+
+    public record SendCitationMessageResponse(CitationMessageDto message) {}
+
+    public record CitationEventDto(
+        Integer id,
+        String eventType,
+        String actorName,
+        String actorRole,
+        String createdAt,
+        String payload
+    ) {}
+
+    public record CitationEventsResponse(List<CitationEventDto> items) {}
 }
+

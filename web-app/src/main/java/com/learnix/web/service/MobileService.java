@@ -142,4 +142,37 @@ public class MobileService {
     public PreferencesResponse updatePreferences(Integer parentId, Boolean darkMode) {
         return mobileRepository.updateParentPreferences(parentId, darkMode);
     }
+
+    public CitationListResponse getParentStudentCitations(Integer parentId, Integer studentId, String status, String from, String to) {
+        List<CitationDto> items = mobileRepository.getParentStudentCitations(parentId, studentId, status, from, to);
+        return new CitationListResponse(items);
+    }
+
+    public CitationDto getCitationDetail(Integer citationId, Integer parentId) {
+        return mobileRepository.getCitationDetail(citationId, parentId);
+    }
+
+    public RespondCitationResponse respondToCitation(Integer citationId, Integer parentId, String status, String reason) {
+        return mobileRepository.respondToCitation(citationId, parentId, status, reason);
+    }
+
+    public ConfirmCitationResponse confirmCitation(Integer citationId, Integer parentId) {
+        return mobileRepository.confirmCitation(citationId, parentId);
+    }
+
+    public CitationMessagesResponse getCitationMessages(Integer citationId, Integer parentId, String after) {
+        List<CitationMessageDto> items = mobileRepository.getCitationMessages(citationId, parentId, after);
+        return new CitationMessagesResponse(items);
+    }
+
+    public SendCitationMessageResponse sendCitationMessage(Integer citationId, String body, Integer parentId) {
+        CitationMessageDto message = mobileRepository.sendCitationMessage(citationId, body, parentId);
+        return new SendCitationMessageResponse(message);
+    }
+
+    public CitationEventsResponse getCitationEvents(Integer citationId) {
+        List<CitationEventDto> items = mobileRepository.getCitationEvents(citationId);
+        return new CitationEventsResponse(items);
+    }
 }
+
