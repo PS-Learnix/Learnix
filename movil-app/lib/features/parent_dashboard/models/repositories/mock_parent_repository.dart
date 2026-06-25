@@ -51,7 +51,7 @@ class MockParentRepository implements ParentRepository {
     Citation(
       id: 102,
       title: 'Seguimiento de asistencia',
-      detail: 'Coordinacion solicita confirmar recepcion de la citacion.',
+      detail: 'Coordinacion solicita atender la citacion virtual.',
       teacherName: 'Coordinacion General',
       scheduledAt: DateTime(2026, 6, 28, 16, 30),
       status: CitationStatus.accepted,
@@ -303,14 +303,6 @@ class MockParentRepository implements ParentRepository {
     );
     _citations[index] = updated;
     return updated;
-  }
-
-  @override
-  Future<Citation> confirmCitation({required int citationId}) {
-    return respondToCitation(
-      citationId: citationId,
-      status: CitationStatus.confirmed,
-    );
   }
 
   @override

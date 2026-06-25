@@ -10,17 +10,17 @@ Requerimientos revisados del documento actualizado:
 - `RF14` Agendar citas: el docente programa fecha, motivo y modalidad.
 - `RF15` Aceptar/rechazar citas: el padre gestiona la invitacion desde la app movil.
 - `RF16` Enviar citaciones masivas: el colegio envia citaciones a una seccion o grupo.
-- `RF17` Confirmar citaciones: el padre confirma recepcion y/o asistencia.
+- `RF17` Confirmar citaciones: queda cubierto por la respuesta directa del padre (`accepted` o `rejected`), sin boton adicional de confirmacion en movil.
 
 La app movil quedo preparada con `Citation`, `CitationMessage`, `CitationController`, `CitationsScreen` y metodos de `ParentRepository` para consumir estos endpoints cuando el backend este disponible.
 
 ## Correcciones de consistencia revisadas en movil
 
-- `status` en los responses moviles de citaciones representa el estado del receptor padre-estudiante (`pending`, `accepted`, `rejected`, `confirmed`, `cancelled`), no solo el estado global de la citacion.
+- `status` en los responses moviles de citaciones representa el estado del receptor padre-estudiante (`pending`, `accepted`, `rejected`, `cancelled`), no solo el estado global de la citacion.
 - Los endpoints sin `parentId` en la ruta deben resolver el padre autenticado desde el token y validar que el receptor pertenezca a la citacion.
-- La confirmacion movil envia un body explicito `{ "confirmed": true }`.
+- El flujo movil ya no usa `confirmCitation`; aceptar o rechazar cierra la respuesta de la citacion.
 - La app conserva `parentId = 1` como fallback provisional para el login mock; en backend real debe reemplazarse por el `parent.id` retornado por autenticacion o validarse desde el token.
-- La pantalla `CitationsScreen` ya contempla carga, seleccion, respuesta, confirmacion y mensajeria bidireccional. El controlador evita notificaciones de estado despues de cerrar la vista.
+- La pantalla `CitationsScreen` ya contempla carga, seleccion, respuesta y mensajeria bidireccional. El controlador evita notificaciones de estado despues de cerrar la vista.
 - La vista web docente debe leer `virtual_citations.global_status`; la app movil de padres debe leer `citation_recipients.recipient_status`. No deben reutilizar el mismo significado de `status`.
 - En la vista web docente, los mensajes con `sender_type = parent` se consideran mensajes entrantes del padre; en la app movil, `isFromParent` se calcula contra el padre autenticado.
 - Las justificaciones de rechazo se almacenan en `citation_recipients.response_reason` y se revisan con `justification_status`: `pending_review`, `justified`, `not_justified`.
@@ -36,7 +36,7 @@ La app movil quedo preparada con `Citation`, `CitationMessage`, `CitationControl
 - El backend `web-app` debe permitir CORS para `/api/mobile/**` cuando se pruebe desde Flutter Web o desde un cliente móvil en desarrollo.
 - Autenticacion: `Authorization: Bearer <token>`
 - Fechas: ISO 8601 (`YYYY-MM-DDTHH:mm:ss`)
-- Estados moviles de receptor: `pending`, `accepted`, `rejected`, `confirmed`, `cancelled`
+- Estados moviles de receptor: `pending`, `accepted`, `rejected`, `cancelled`
 - Estados globales de citacion: `scheduled`, `cancelled`, `completed`
 - Modalidades: `virtual`, `in_person`
 - Cuerpo de error sugerido:
@@ -44,7 +44,7 @@ La app movil quedo preparada con `Citation`, `CitationMessage`, `CitationControl
 ```json
 {
   "code": "VALIDATION_ERROR",
-  "message": "La citacion no puede confirmarse en su estado actual.",
+  "message": "La citacion no puede procesarse en su estado actual.",
   "details": []
 }
 ```
@@ -213,52 +213,16 @@ Cuando `status = rejected`, guardar `response_reason` y establecer `justificatio
 
 **Pantalla/componente movil:** botones `Aceptar` y `Rechazar` de `CitationsScreen`.
 
-## 4. Confirmar recepcion o asistencia
+## 4. Confirmacion independiente retirada
 
-**Nombre:** Confirmar citacion PMV3  
-**Metodo HTTP:** `PATCH`  
-**Ruta sugerida:** `/api/mobile/citations/{citationId}/confirm`
+El flujo movil activo no requiere endpoint ni boton de confirmacion independiente. La respuesta queda cerrada con:
 
-**Descripcion funcional:** registra que el padre confirma recepcion y/o asistencia a la citacion.
+- `PATCH /api/mobile/citations/{citationId}/response` con `status = accepted`.
+- `PATCH /api/mobile/citations/{citationId}/response` con `status = rejected` y `reason` obligatorio.
 
-**Parametros requeridos:**
+**Observaciones tecnicas:** si existen registros historicos con `recipient_status = confirmed`, la app movil los interpreta visualmente como `accepted`. Las nuevas respuestas no deben generar `confirmed`.
 
-| Parametro | Ubicacion | Tipo | Requerido |
-| --- | --- | --- | --- |
-| `citationId` | path | int | Si |
-
-**Request esperado:**
-
-```json
-{
-  "confirmed": true
-}
-```
-
-**Response esperado `200`:**
-
-```json
-{
-  "citation": {
-    "id": 101,
-    "title": "Citacion virtual con tutoria",
-    "detail": "Revision de avance academico y acuerdos de apoyo en casa.",
-    "teacherName": "Ana Gomez",
-    "scheduledAt": "2026-06-25T17:00:00",
-    "status": "confirmed",
-    "mode": "virtual",
-    "meetingUrl": "https://meet.learnix.edu/cita-101"
-  },
-  "confirmedAt": "2026-06-17T15:20:00"
-}
-```
-
-**Codigos de estado posibles:** `200`, `400`, `401`, `403`, `404`, `409`, `500`.
-
-**Observaciones tecnicas:** recomendado permitir confirmacion despues de `accepted`. Si se interpreta como confirmacion de recepcion, tambien puede permitirse desde `pending`, dejando trazabilidad en eventos.
-La app movil actual habilita el boton `Confirmar` cuando el receptor esta en `accepted`.
-
-**Pantalla/componente movil:** boton `Confirmar` de `CitationsScreen`.
+**Pantalla/componente movil:** `CitationsScreen` solo muestra `Aceptar` y `Rechazar`.
 
 ## 5. Listar mensajes de una citacion
 
@@ -361,7 +325,7 @@ El sender no debe recibirse desde el cliente; debe derivarse del token.
 **Metodo HTTP:** `GET`  
 **Ruta sugerida:** `/api/mobile/citations/{citationId}/events`
 
-**Descripcion funcional:** obtiene historial de creacion, envio, lectura, respuesta, confirmacion, reprogramacion y mensajes.
+**Descripcion funcional:** obtiene historial de creacion, envio, lectura, respuesta, reprogramacion y mensajes.
 
 **Parametros requeridos:**
 
@@ -532,13 +496,13 @@ Finalidad: guardar el estado de cada padre destinatario.
 | `id_citation` | INT NOT NULL | FK `virtual_citations.id_citation` | Citacion |
 | `id_parent` | INT NOT NULL | FK `parents.id_parent` | Padre receptor |
 | `id_student` | INT NOT NULL | FK `students.id_student` | Estudiante asociado |
-| `recipient_status` | VARCHAR(20) |  | `pending`, `accepted`, `rejected`, `confirmed` |
+| `recipient_status` | VARCHAR(20) |  | `pending`, `accepted`, `rejected` |
 | `response_reason` | TEXT NULL |  | Motivo de rechazo |
 | `justification_status` | VARCHAR(20) NULL |  | `pending_review`, `justified`, `not_justified` |
 | `justification_reviewed_at` | DATETIME NULL |  | Fecha de revision docente |
 | `read_at` | DATETIME NULL |  | Lectura |
 | `responded_at` | DATETIME NULL |  | Aceptacion/rechazo |
-| `confirmed_at` | DATETIME NULL |  | Confirmacion |
+| `confirmed_at` | DATETIME NULL |  | Campo legado; no se usa en el flujo movil actual |
 
 Relacion: resuelve citaciones masivas por padre/estudiante y permite trazabilidad por destinatario.
 Se recomienda una restriccion unica sobre (`id_citation`, `id_parent`, `id_student`) para evitar invitaciones duplicadas.
@@ -570,7 +534,7 @@ Finalidad: registrar auditoria y sincronizacion del flujo.
 | `id_citation` | INT NOT NULL | FK `virtual_citations.id_citation` | Citacion |
 | `actor_type` | VARCHAR(20) |  | `parent`, `user`, `system` |
 | `actor_id` | INT NOT NULL |  | Actor |
-| `event_type` | VARCHAR(40) |  | `created`, `sent`, `read`, `accepted`, `rejected`, `confirmed`, `message_sent`, `cancelled` |
+| `event_type` | VARCHAR(40) |  | `created`, `sent`, `read`, `accepted`, `rejected`, `message_sent`, `cancelled` |
 | `payload` | JSON NULL |  | Datos adicionales |
 | `created_at` | DATETIME |  | Fecha |
 
@@ -597,7 +561,7 @@ Relacion: usado por backend/docente para RF14. La app movil de padres no lo rend
 | --- | --- |
 | Ver citaciones | Preparado en `CitationsScreen` |
 | Aceptar/rechazar | Preparado con `respondToCitation` |
-| Confirmar citacion | Preparado con `confirmCitation` |
+| Confirmar citacion | Retirado del flujo movil; aceptar/rechazar cierra la respuesta |
 | Comunicacion bidireccional | Preparado con `loadCitationMessages` y `sendCitationMessage` |
 | Resumen web docente | Implementado con conteo de aceptados, rechazados y pendientes |
 | Revision de justificaciones | Implementada con `justification_status` y mensaje automatico si no procede |

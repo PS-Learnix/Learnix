@@ -58,12 +58,13 @@ class _CitationsScreenState extends State<CitationsScreen> {
           ),
         ],
       ),
-      body: switch ((_controller.isLoading, _controller.error)) {
-        (true, _) => const Center(child: CircularProgressIndicator()),
-        (_, final String error) => _ErrorState(message: error),
-        _ when _controller.citations.isEmpty => const _EmptyState(),
-        _ => _buildContent(context),
-      },
+      body: _controller.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _controller.citations.isEmpty
+              ? (_controller.error == null
+                  ? const _EmptyState()
+                  : _ErrorState(message: _controller.error!))
+              : _buildContent(context),
     );
   }
 
@@ -91,16 +92,21 @@ class _CitationsScreenState extends State<CitationsScreen> {
         ),
         const SizedBox(height: 12),
         if (selected != null) ...[
+          if (_controller.error != null) ...[
+            _InlineErrorBanner(message: _controller.error!),
+            const SizedBox(height: 12),
+          ],
           _CitationDetailCard(
             citation: selected,
-            onAccept: _controller.acceptSelected,
+            isResponding: _controller.isResponding,
+            onAccept: () => _acceptCitation(context),
             onReject: () => _rejectCitation(context),
-            onConfirm: _controller.confirmSelected,
           ),
           const SizedBox(height: 12),
           _MessagesCard(
             messages: _controller.messages,
             controller: _messageController,
+            isSending: _controller.isSendingMessage,
             onSend: _sendMessage,
           ),
         ],
@@ -148,11 +154,43 @@ class _CitationsScreenState extends State<CitationsScreen> {
       return;
     }
     await _controller.rejectSelected(reason);
+    if (!context.mounted) return;
+    if (_controller.error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Citacion rechazada.')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_controller.error!)),
+      );
+    }
+  }
+
+  Future<void> _acceptCitation(BuildContext context) async {
+    await _controller.acceptSelected();
+    if (!context.mounted) return;
+    if (_controller.error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Citacion aceptada.')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_controller.error!)),
+      );
+    }
   }
 
   Future<void> _sendMessage() async {
+    final text = _messageController.text;
     await _controller.sendMessage(_messageController.text);
-    _messageController.clear();
+    if (!mounted) return;
+    if (_controller.error == null && text.trim().isNotEmpty) {
+      _messageController.clear();
+    } else if (_controller.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_controller.error!)),
+      );
+    }
   }
 }
 
@@ -218,20 +256,19 @@ class _CitationChip extends StatelessWidget {
 class _CitationDetailCard extends StatelessWidget {
   const _CitationDetailCard({
     required this.citation,
+    required this.isResponding,
     required this.onAccept,
     required this.onReject,
-    required this.onConfirm,
   });
 
   final Citation citation;
+  final bool isResponding;
   final VoidCallback onAccept;
   final VoidCallback onReject;
-  final VoidCallback onConfirm;
 
   @override
   Widget build(BuildContext context) {
     final canRespond = citation.status == CitationStatus.pending;
-    final canConfirm = citation.status == CitationStatus.accepted;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -286,19 +323,20 @@ class _CitationDetailCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 FilledButton.icon(
-                  onPressed: canRespond ? onAccept : null,
-                  icon: const Icon(Icons.check),
+                  onPressed: canRespond && !isResponding ? onAccept : null,
+                  icon: isResponding
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check),
                   label: const Text('Aceptar'),
                 ),
                 OutlinedButton.icon(
-                  onPressed: canRespond ? onReject : null,
+                  onPressed: canRespond && !isResponding ? onReject : null,
                   icon: const Icon(Icons.close),
                   label: const Text('Rechazar'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: canConfirm ? onConfirm : null,
-                  icon: const Icon(Icons.fact_check_outlined),
-                  label: const Text('Confirmar'),
                 ),
               ],
             ),
@@ -313,11 +351,13 @@ class _MessagesCard extends StatelessWidget {
   const _MessagesCard({
     required this.messages,
     required this.controller,
+    required this.isSending,
     required this.onSend,
   });
 
   final List<CitationMessage> messages;
   final TextEditingController controller;
+  final bool isSending;
   final VoidCallback onSend;
 
   @override
@@ -369,10 +409,50 @@ class _MessagesCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton.filled(
                   tooltip: 'Enviar',
-                  onPressed: onSend,
-                  icon: const Icon(Icons.send),
+                  onPressed: isSending ? null : onSend,
+                  icon: isSending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.send),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InlineErrorBanner extends StatelessWidget {
+  const _InlineErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).colorScheme.errorContainer,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(
+              Icons.error_outline,
+              color: Theme.of(context).colorScheme.onErrorContainer,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                ),
+              ),
             ),
           ],
         ),
@@ -492,7 +572,6 @@ class _ErrorState extends StatelessWidget {
 Color _statusColor(CitationStatus status) {
   switch (status) {
     case CitationStatus.accepted:
-    case CitationStatus.confirmed:
       return const Color(0xFF198754);
     case CitationStatus.rejected:
     case CitationStatus.cancelled:
@@ -508,8 +587,6 @@ String _statusLabel(CitationStatus status) {
       return 'Aceptada';
     case CitationStatus.rejected:
       return 'Rechazada';
-    case CitationStatus.confirmed:
-      return 'Confirmada';
     case CitationStatus.cancelled:
       return 'Cancelada';
     case CitationStatus.pending:

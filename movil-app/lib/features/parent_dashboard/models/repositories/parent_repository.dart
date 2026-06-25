@@ -22,8 +22,6 @@ abstract interface class ParentRepository {
     String? reason,
   });
 
-  Future<Citation> confirmCitation({required int citationId});
-
   Future<List<CitationMessage>> loadCitationMessages({
     required int citationId,
   });

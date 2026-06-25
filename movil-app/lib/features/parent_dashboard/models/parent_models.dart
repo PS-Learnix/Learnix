@@ -10,7 +10,7 @@ enum AttendanceStatus { attended, absent, late }
 
 enum ReportFormat { pdf, excel }
 
-enum CitationStatus { pending, accepted, rejected, confirmed, cancelled }
+enum CitationStatus { pending, accepted, rejected, cancelled }
 
 enum CitationMode { virtual, inPerson }
 

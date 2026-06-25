@@ -11,6 +11,10 @@ ALTER TABLE citation_messages
     ADD CONSTRAINT fk_citation_messages_target_parent
         FOREIGN KEY (target_id_parent) REFERENCES parents(id_parent) ON DELETE CASCADE;
 
+UPDATE citation_recipients
+SET recipient_status = 'accepted'
+WHERE recipient_status = 'confirmed';
+
 DELIMITER //
 
 DROP PROCEDURE IF EXISTS sp_respond_to_citation //
@@ -48,12 +52,30 @@ BEGIN
 
         IF v_recipient_status IS NULL THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El padre no pertenece a esta citacion.';
+        ELSEIF v_recipient_status = p_status THEN
+            SELECT
+                vc.id_citation AS id,
+                vc.title AS title,
+                vc.detail AS detail,
+                CONCAT(u.first_name, ' ', u.last_name) AS teacherName,
+                vc.scheduled_at AS scheduledAt,
+                cr.recipient_status AS status,
+                vc.mode AS mode,
+                vc.meeting_url AS meetingUrl,
+                NULL AS eventId
+            FROM virtual_citations vc
+            LEFT JOIN users u ON vc.id_teacher = u.id_user
+            JOIN citation_recipients cr ON vc.id_citation = cr.id_citation
+            WHERE vc.id_citation = p_id_citation AND cr.id_parent = p_id_parent;
+        ELSEIF v_recipient_status <> 'pending' THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La citacion ya fue respondida.';
         ELSE
             UPDATE citation_recipients
             SET recipient_status = p_status,
                 response_reason = CASE WHEN p_status = 'rejected' THEN TRIM(p_reason) ELSE NULL END,
                 justification_status = CASE WHEN p_status = 'rejected' THEN 'pending_review' ELSE NULL END,
                 justification_reviewed_at = NULL,
+                read_at = COALESCE(read_at, NOW()),
                 responded_at = NOW()
             WHERE id_citation = p_id_citation AND id_parent = p_id_parent;
 
@@ -84,6 +106,15 @@ BEGIN
             WHERE vc.id_citation = p_id_citation AND cr.id_parent = p_id_parent;
         END IF;
     END IF;
+END //
+
+DROP PROCEDURE IF EXISTS sp_confirm_citation //
+CREATE PROCEDURE sp_confirm_citation(
+    IN p_id_citation INT,
+    IN p_id_parent INT
+)
+BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La confirmacion independiente fue retirada. Use aceptar o rechazar la citacion.';
 END //
 
 DROP PROCEDURE IF EXISTS sp_get_citation_messages //

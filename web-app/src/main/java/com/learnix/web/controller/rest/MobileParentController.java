@@ -204,6 +204,7 @@ public class MobileParentController {
         }
     }
 
+    @Deprecated
     @PatchMapping("/citations/{citationId}/confirm")
     public ResponseEntity<?> confirmCitation(
             @PathVariable Integer citationId,

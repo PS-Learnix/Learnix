@@ -17,6 +17,8 @@ class CitationController extends ChangeNotifier {
   final int studentId;
 
   bool _isLoading = true;
+  bool _isResponding = false;
+  bool _isSendingMessage = false;
   bool _isDisposed = false;
   String? _error;
   List<Citation> _citations = [];
@@ -24,6 +26,8 @@ class CitationController extends ChangeNotifier {
   List<CitationMessage> _messages = [];
 
   bool get isLoading => _isLoading;
+  bool get isResponding => _isResponding;
+  bool get isSendingMessage => _isSendingMessage;
   String? get error => _error;
   List<Citation> get citations => List.unmodifiable(_citations);
   Citation? get selectedCitation => _selectedCitation;
@@ -82,24 +86,26 @@ class CitationController extends ChangeNotifier {
     return _updateSelected(CitationStatus.rejected, reason: reason);
   }
 
-  Future<void> confirmSelected() async {
-    final citation = _selectedCitation;
-    if (citation == null) return;
-    final updated =
-        await repository.confirmCitation(citationId: citation.id);
-    _replaceCitation(updated);
-  }
-
   Future<void> sendMessage(String body) async {
     final citation = _selectedCitation;
     final cleanBody = body.trim();
     if (citation == null || cleanBody.isEmpty) return;
-    final message = await repository.sendCitationMessage(
-      citationId: citation.id,
-      body: cleanBody,
-    );
-    _messages = [..._messages, message];
+    _isSendingMessage = true;
+    _error = null;
     _safeNotifyListeners();
+    try {
+      final message = await repository.sendCitationMessage(
+        citationId: citation.id,
+        body: cleanBody,
+      );
+      _messages = [..._messages, message];
+      _error = null;
+    } catch (e) {
+      _error = '$e';
+    } finally {
+      _isSendingMessage = false;
+      _safeNotifyListeners();
+    }
   }
 
   Future<void> _updateSelected(
@@ -108,12 +114,23 @@ class CitationController extends ChangeNotifier {
   }) async {
     final citation = _selectedCitation;
     if (citation == null) return;
-    final updated = await repository.respondToCitation(
-      citationId: citation.id,
-      status: status,
-      reason: reason,
-    );
-    _replaceCitation(updated);
+    _isResponding = true;
+    _error = null;
+    _safeNotifyListeners();
+    try {
+      final updated = await repository.respondToCitation(
+        citationId: citation.id,
+        status: status,
+        reason: reason,
+      );
+      _replaceCitation(updated);
+    } catch (e) {
+      _error = '$e';
+      _safeNotifyListeners();
+    } finally {
+      _isResponding = false;
+      _safeNotifyListeners();
+    }
   }
 
   void _replaceCitation(Citation updated) {

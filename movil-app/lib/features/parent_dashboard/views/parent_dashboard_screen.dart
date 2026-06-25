@@ -795,7 +795,7 @@ class _ProfileSheet extends StatelessWidget {
                   leading: const Icon(Icons.event_note_outlined),
                   title: const Text('Gestionar citaciones'),
                   subtitle: const Text(
-                    'Aceptar, rechazar, confirmar y responder mensajes.',
+                    'Aceptar, rechazar y responder mensajes.',
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {

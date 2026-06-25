@@ -11,6 +11,7 @@ class HttpParentRepository implements ParentRepository {
   static const String _configuredBaseUrl = String.fromEnvironment(
     'LEARNIX_API_BASE_URL',
   );
+  static const Duration _requestTimeout = Duration(seconds: 15);
 
   static String get _defaultBaseUrl {
     if (_configuredBaseUrl.isNotEmpty) return _configuredBaseUrl;
@@ -361,7 +362,8 @@ class HttpParentRepository implements ParentRepository {
     final uri = Uri.parse(
       '$baseUrl/api/mobile/parents/$actualParentId/students/$actualStudentId/citations',
     );
-    final response = await http.get(uri, headers: _headers);
+    final response =
+        await http.get(uri, headers: _headers).timeout(_requestTimeout);
     if (response.statusCode != 200) {
       throw Exception('Failed to load citations: ${response.statusCode}');
     }
@@ -378,33 +380,19 @@ class HttpParentRepository implements ParentRepository {
   }) async {
     final uri =
         Uri.parse('$baseUrl/api/mobile/citations/$citationId/response');
-    final response = await http.patch(
-      uri,
-      headers: _headers,
-      body: jsonEncode({
-        'status': _citationStatusValue(status),
-        if (reason != null && reason.trim().isNotEmpty)
-          'reason': reason.trim(),
-      }),
-    );
+    final response = await http
+        .patch(
+          uri,
+          headers: _headers,
+          body: jsonEncode({
+            'status': _citationStatusValue(status),
+            if (reason != null && reason.trim().isNotEmpty)
+              'reason': reason.trim(),
+          }),
+        )
+        .timeout(_requestTimeout);
     if (response.statusCode != 200) {
       throw Exception('Failed to respond citation: ${response.statusCode}');
-    }
-    final data = jsonDecode(utf8.decode(response.bodyBytes));
-    return _parseCitation(data['citation'] ?? data);
-  }
-
-  @override
-  Future<Citation> confirmCitation({required int citationId}) async {
-    final uri =
-        Uri.parse('$baseUrl/api/mobile/citations/$citationId/confirm');
-    final response = await http.patch(
-      uri,
-      headers: _headers,
-      body: jsonEncode({'confirmed': true}),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to confirm citation: ${response.statusCode}');
     }
     final data = jsonDecode(utf8.decode(response.bodyBytes));
     return _parseCitation(data['citation'] ?? data);
@@ -416,7 +404,8 @@ class HttpParentRepository implements ParentRepository {
   }) async {
     final uri =
         Uri.parse('$baseUrl/api/mobile/citations/$citationId/messages');
-    final response = await http.get(uri, headers: _headers);
+    final response =
+        await http.get(uri, headers: _headers).timeout(_requestTimeout);
     if (response.statusCode != 200) {
       throw Exception(
         'Failed to load citation messages: ${response.statusCode}',
@@ -434,11 +423,13 @@ class HttpParentRepository implements ParentRepository {
   }) async {
     final uri =
         Uri.parse('$baseUrl/api/mobile/citations/$citationId/messages');
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: jsonEncode({'body': body.trim()}),
-    );
+    final response = await http
+        .post(
+          uri,
+          headers: _headers,
+          body: jsonEncode({'body': body.trim()}),
+        )
+        .timeout(_requestTimeout);
     if (response.statusCode != 201) {
       throw Exception('Failed to send citation message: ${response.statusCode}');
     }
@@ -621,7 +612,7 @@ class HttpParentRepository implements ParentRepository {
         return CitationStatus.rejected;
       case 'confirmed':
       case 'confirmada':
-        return CitationStatus.confirmed;
+        return CitationStatus.accepted;
       case 'cancelled':
       case 'cancelada':
         return CitationStatus.cancelled;
@@ -649,8 +640,6 @@ class HttpParentRepository implements ParentRepository {
         return 'accepted';
       case CitationStatus.rejected:
         return 'rejected';
-      case CitationStatus.confirmed:
-        return 'confirmed';
       case CitationStatus.cancelled:
         return 'cancelled';
       case CitationStatus.pending:
