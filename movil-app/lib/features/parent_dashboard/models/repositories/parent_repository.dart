@@ -19,7 +19,6 @@ abstract interface class ParentRepository {
   Future<Citation> respondToCitation({
     required int citationId,
     required CitationStatus status,
-    String? reason,
   });
 
   Future<List<CitationMessage>> loadCitationMessages({

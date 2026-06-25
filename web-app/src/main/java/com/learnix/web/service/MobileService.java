@@ -152,8 +152,8 @@ public class MobileService {
         return mobileRepository.getCitationDetail(citationId, parentId);
     }
 
-    public RespondCitationResponse respondToCitation(Integer citationId, Integer parentId, String status, String reason) {
-        return mobileRepository.respondToCitation(citationId, parentId, status, reason);
+    public RespondCitationResponse respondToCitation(Integer citationId, Integer parentId, String status) {
+        return mobileRepository.respondToCitation(citationId, parentId, status);
     }
 
     public ConfirmCitationResponse confirmCitation(Integer citationId, Integer parentId) {

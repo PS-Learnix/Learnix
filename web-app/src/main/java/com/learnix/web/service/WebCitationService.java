@@ -58,14 +58,6 @@ public class WebCitationService {
     }
 
     @Transactional
-    public void reviewJustification(Integer citationId, Integer recipientId, Integer teacherId, String reviewStatus) {
-        if (!"justified".equals(reviewStatus) && !"not_justified".equals(reviewStatus)) {
-            throw new IllegalArgumentException("Estado de justificacion no valido.");
-        }
-        webCitationRepository.reviewJustification(citationId, recipientId, teacherId, reviewStatus);
-    }
-
-    @Transactional
     public void cancelCitation(Integer citationId, Integer teacherId) {
         webCitationRepository.cancelCitation(citationId, teacherId);
     }

@@ -143,28 +143,6 @@ public class CitationController {
         return "redirect:/citations/" + citationId + "?parentId=" + parentId;
     }
 
-    @PostMapping("/{id}/recipients/{recipientId}/justification")
-    public String reviewJustification(
-            @PathVariable("id") Integer citationId,
-            @PathVariable("recipientId") Integer recipientId,
-            @RequestParam("status") String status,
-            @RequestParam("parentId") Integer parentId,
-            HttpSession session,
-            RedirectAttributes redirectAttributes
-    ) {
-        UserResponse user = getAuthenticatedUser(session);
-        if (user == null) return "redirect:/login";
-
-        try {
-            webCitationService.reviewJustification(citationId, recipientId, user.idUser(), status);
-            redirectAttributes.addFlashAttribute("success", "Justificacion revisada correctamente.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al revisar justificacion: " + e.getMessage());
-        }
-
-        return "redirect:/citations/" + citationId + "?parentId=" + parentId;
-    }
-
     @PostMapping("/{id}/cancel")
     public String cancelCitation(
             @PathVariable("id") Integer citationId,

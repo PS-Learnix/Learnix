@@ -379,12 +379,11 @@ public class MobileRepository extends BaseProcedureRepository {
         return list.isEmpty() ? null : list.get(0);
     }
 
-    public RespondCitationResponse respondToCitation(Integer citationId, Integer parentId, String status, String reason) {
+    public RespondCitationResponse respondToCitation(Integer citationId, Integer parentId, String status) {
         Map<String, Object> inParams = new HashMap<>();
         inParams.put("p_id_citation", citationId);
         inParams.put("p_id_parent", parentId);
         inParams.put("p_status", status);
-        inParams.put("p_reason", reason);
         List<RespondCitationResponse> list = executeAndConvertList(respondToCitationCall, RespondCitationResponse.class, inParams, "respondResult");
         return list.isEmpty() ? null : list.get(0);
     }

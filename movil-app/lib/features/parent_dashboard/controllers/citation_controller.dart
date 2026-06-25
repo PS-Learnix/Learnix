@@ -77,13 +77,8 @@ class CitationController extends ChangeNotifier {
     return _updateSelected(CitationStatus.accepted);
   }
 
-  Future<void> rejectSelected(String reason) {
-    if (reason.trim().isEmpty) {
-      _error = 'Debe escribir una razon para rechazar la citacion.';
-      _safeNotifyListeners();
-      return Future<void>.value();
-    }
-    return _updateSelected(CitationStatus.rejected, reason: reason);
+  Future<void> rejectSelected() {
+    return _updateSelected(CitationStatus.rejected);
   }
 
   Future<void> sendMessage(String body) async {
@@ -108,10 +103,7 @@ class CitationController extends ChangeNotifier {
     }
   }
 
-  Future<void> _updateSelected(
-    CitationStatus status, {
-    String? reason,
-  }) async {
+  Future<void> _updateSelected(CitationStatus status) async {
     final citation = _selectedCitation;
     if (citation == null) return;
     _isResponding = true;
@@ -121,7 +113,6 @@ class CitationController extends ChangeNotifier {
       final updated = await repository.respondToCitation(
         citationId: citation.id,
         status: status,
-        reason: reason,
       );
       _replaceCitation(updated);
     } catch (e) {

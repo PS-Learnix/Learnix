@@ -23,7 +23,6 @@ La app movil quedo preparada con `Citation`, `CitationMessage`, `CitationControl
 - La pantalla `CitationsScreen` ya contempla carga, seleccion, respuesta y mensajeria bidireccional. El controlador evita notificaciones de estado despues de cerrar la vista.
 - La vista web docente debe leer `virtual_citations.global_status`; la app movil de padres debe leer `citation_recipients.recipient_status`. No deben reutilizar el mismo significado de `status`.
 - En la vista web docente, los mensajes con `sender_type = parent` se consideran mensajes entrantes del padre; en la app movil, `isFromParent` se calcula contra el padre autenticado.
-- Las justificaciones de rechazo se almacenan en `citation_recipients.response_reason` y se revisan con `justification_status`: `pending_review`, `justified`, `not_justified`.
 - Los mensajes del profesor o automaticos pueden dirigirse a un padre especifico mediante `citation_messages.target_id_parent`, evitando que una citacion masiva filtre conversaciones entre familias.
 
 ## Convenciones
@@ -165,14 +164,12 @@ Si tambien se requiere el estado institucional de la citacion, devolver un campo
 | --- | --- | --- | --- |
 | `citationId` | path | int | Si |
 | `status` | body | string | Si |
-| `reason` | body | string | No |
 
 **Request esperado:**
 
 ```json
 {
-  "status": "accepted",
-  "reason": null
+  "status": "accepted"
 }
 ```
 
@@ -180,12 +177,9 @@ Para rechazo:
 
 ```json
 {
-  "status": "rejected",
-  "reason": "No puedo asistir en ese horario."
+  "status": "rejected"
 }
 ```
-
-Para `status = rejected`, `reason` es obligatorio. La app movil no debe permitir enviar rechazo con el campo vacio.
 
 **Response esperado `200`:**
 
@@ -209,7 +203,7 @@ Para `status = rejected`, `reason` es obligatorio. La app movil no debe permitir
 
 **Observaciones tecnicas:** solo debe aceptar `accepted` o `rejected`. Si la cita esta `cancelled` o ya vencio, responder `409`.
 El backend debe validar que el usuario autenticado corresponda al receptor registrado en `citation_recipients`.
-Cuando `status = rejected`, guardar `response_reason` y establecer `justification_status = pending_review`.
+Cuando `status = rejected`, no se solicita ni guarda razon de rechazo.
 
 **Pantalla/componente movil:** botones `Aceptar` y `Rechazar` de `CitationsScreen`.
 
@@ -218,7 +212,7 @@ Cuando `status = rejected`, guardar `response_reason` y establecer `justificatio
 El flujo movil activo no requiere endpoint ni boton de confirmacion independiente. La respuesta queda cerrada con:
 
 - `PATCH /api/mobile/citations/{citationId}/response` con `status = accepted`.
-- `PATCH /api/mobile/citations/{citationId}/response` con `status = rejected` y `reason` obligatorio.
+- `PATCH /api/mobile/citations/{citationId}/response` con `status = rejected`.
 
 **Observaciones tecnicas:** si existen registros historicos con `recipient_status = confirmed`, la app movil los interpreta visualmente como `accepted`. Las nuevas respuestas no deben generar `confirmed`.
 
@@ -413,34 +407,7 @@ Authorization: Bearer <token>
 
 **Pantalla/componente movil:** icono de notificaciones del `AppBar`.
 
-## 9. Revision web de justificacion
-
-**Nombre:** Revisar justificacion de rechazo
-**Metodo HTTP:** `POST`
-**Ruta web:** `/citations/{citationId}/recipients/{recipientId}/justification`
-
-**Descripcion funcional:** permite que el profesor marque la razon de rechazo enviada por el padre como justificada o no justificada.
-
-**Request esperado:**
-
-```http
-POST /citations/101/recipients/33/justification
-Content-Type: application/x-www-form-urlencoded
-
-status=not_justified&parentId=1
-```
-
-**Valores permitidos:** `justified`, `not_justified`.
-
-**Efecto esperado:**
-
-- Actualiza `citation_recipients.justification_status`.
-- Registra `citation_recipients.justification_reviewed_at`.
-- Si el estado es `not_justified`, inserta automaticamente un mensaje docente dirigido al padre mediante `citation_messages.target_id_parent`.
-
-**Pantalla/componente web:** detalle de citacion, bloque `Resumen de respuestas`.
-
-## 10. Comunicacion web por contacto
+## 9. Comunicacion web por contacto
 
 **Nombre:** Conversacion docente-padre por citacion
 **Metodo HTTP:** `GET`
@@ -497,9 +464,6 @@ Finalidad: guardar el estado de cada padre destinatario.
 | `id_parent` | INT NOT NULL | FK `parents.id_parent` | Padre receptor |
 | `id_student` | INT NOT NULL | FK `students.id_student` | Estudiante asociado |
 | `recipient_status` | VARCHAR(20) |  | `pending`, `accepted`, `rejected` |
-| `response_reason` | TEXT NULL |  | Motivo de rechazo |
-| `justification_status` | VARCHAR(20) NULL |  | `pending_review`, `justified`, `not_justified` |
-| `justification_reviewed_at` | DATETIME NULL |  | Fecha de revision docente |
 | `read_at` | DATETIME NULL |  | Lectura |
 | `responded_at` | DATETIME NULL |  | Aceptacion/rechazo |
 | `confirmed_at` | DATETIME NULL |  | Campo legado; no se usa en el flujo movil actual |
@@ -564,7 +528,7 @@ Relacion: usado por backend/docente para RF14. La app movil de padres no lo rend
 | Confirmar citacion | Retirado del flujo movil; aceptar/rechazar cierra la respuesta |
 | Comunicacion bidireccional | Preparado con `loadCitationMessages` y `sendCitationMessage` |
 | Resumen web docente | Implementado con conteo de aceptados, rechazados y pendientes |
-| Revision de justificaciones | Implementada con `justification_status` y mensaje automatico si no procede |
+| Revision de justificaciones | Retirada del flujo |
 | Trazabilidad | Conservada como soporte tecnico en `citation_events`, ya no como seccion principal |
 | Citaciones masivas | Contrato cubierto por `scope` y `citation_recipients` |
 | Web-app | Conectado a procedimientos y tablas reales de PMV3 |

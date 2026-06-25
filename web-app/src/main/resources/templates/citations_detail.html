@@ -101,28 +101,6 @@
                             </div>
                             <div class="text-secondary text-xs mb-2" th:text="'Apoderado: ' + ${rec.parentName}">Apoderado</div>
 
-                            <div class="alert alert-warning p-2 text-xs m-0 border-warning-subtle rounded-3" th:if="${rec.reason != null && !rec.reason.isEmpty()}">
-                                <div class="fw-bold mb-1">Justificacion del rechazo</div>
-                                <div th:text="${rec.reason}">Motivo rechazo</div>
-                                <div class="mt-2" th:if="${rec.justificationStatus != null}">
-                                    <span class="badge rounded-pill"
-                                          th:classappend="${rec.justificationStatus == 'justified' ? 'bg-success' : (rec.justificationStatus == 'not_justified' ? 'bg-danger' : 'bg-secondary')}"
-                                          th:text="${rec.justificationStatus == 'justified' ? 'Justificada' : (rec.justificationStatus == 'not_justified' ? 'No justificada' : 'Pendiente de revision')}">Pendiente</span>
-                                </div>
-                                <div class="d-flex gap-2 mt-2">
-                                    <form th:action="@{/citations/{id}/recipients/{recipientId}/justification(id=${citation.id}, recipientId=${rec.idRecipient})}" method="post">
-                                        <input type="hidden" name="status" value="justified">
-                                        <input type="hidden" name="parentId" th:value="${rec.parentId}">
-                                        <button type="submit" class="btn btn-sm btn-outline-success rounded-pill">Justificada</button>
-                                    </form>
-                                    <form th:action="@{/citations/{id}/recipients/{recipientId}/justification(id=${citation.id}, recipientId=${rec.idRecipient})}" method="post">
-                                        <input type="hidden" name="status" value="not_justified">
-                                        <input type="hidden" name="parentId" th:value="${rec.parentId}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">No justificada</button>
-                                    </form>
-                                </div>
-                            </div>
-
                             <div class="text-muted text-xs mt-2" style="font-size: 0.75rem;">
                                 <span class="d-block" th:if="${rec.readAt != null}" th:text="'Leido: ' + ${rec.readAt}">-</span>
                                 <span class="d-block" th:if="${rec.respondedAt != null}" th:text="'Respondido: ' + ${rec.respondedAt}">-</span>

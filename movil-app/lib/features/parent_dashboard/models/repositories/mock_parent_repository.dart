@@ -283,7 +283,6 @@ class MockParentRepository implements ParentRepository {
   Future<Citation> respondToCitation({
     required int citationId,
     required CitationStatus status,
-    String? reason,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 180));
     final index = _citations.indexWhere((item) => item.id == citationId);
@@ -292,9 +291,7 @@ class MockParentRepository implements ParentRepository {
     final updated = Citation(
       id: current.id,
       title: current.title,
-      detail: reason == null || reason.trim().isEmpty
-          ? current.detail
-          : '${current.detail}\nMotivo: ${reason.trim()}',
+      detail: current.detail,
       teacherName: current.teacherName,
       scheduledAt: current.scheduledAt,
       status: status,

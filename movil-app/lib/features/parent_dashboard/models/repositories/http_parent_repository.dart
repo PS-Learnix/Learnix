@@ -376,7 +376,6 @@ class HttpParentRepository implements ParentRepository {
   Future<Citation> respondToCitation({
     required int citationId,
     required CitationStatus status,
-    String? reason,
   }) async {
     final uri =
         Uri.parse('$baseUrl/api/mobile/citations/$citationId/response');
@@ -386,8 +385,6 @@ class HttpParentRepository implements ParentRepository {
           headers: _headers,
           body: jsonEncode({
             'status': _citationStatusValue(status),
-            if (reason != null && reason.trim().isNotEmpty)
-              'reason': reason.trim(),
           }),
         )
         .timeout(_requestTimeout);

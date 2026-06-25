@@ -115,45 +115,7 @@ class _CitationsScreenState extends State<CitationsScreen> {
   }
 
   Future<void> _rejectCitation(BuildContext context) async {
-    final reasonController = TextEditingController();
-    final reason = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Rechazar citacion'),
-        content: TextField(
-          controller: reasonController,
-          decoration: const InputDecoration(
-            labelText: 'Motivo',
-            border: OutlineInputBorder(),
-          ),
-          minLines: 2,
-          maxLines: 4,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.of(context).pop(reasonController.text),
-            child: const Text('Enviar'),
-          ),
-        ],
-      ),
-    );
-    reasonController.dispose();
-    if (reason == null) return;
-    if (reason.trim().isEmpty) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Debe escribir una razon para rechazar la citacion.'),
-        ),
-      );
-      return;
-    }
-    await _controller.rejectSelected(reason);
+    await _controller.rejectSelected();
     if (!context.mounted) return;
     if (_controller.error == null) {
       ScaffoldMessenger.of(context).showSnackBar(

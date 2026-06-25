@@ -1,10 +1,6 @@
 -- =========================================================================
--- FLYWAY V19: JUSTIFICACIONES Y MENSAJERIA DIRIGIDA EN CITACIONES PMV3
+-- FLYWAY V19: RESPUESTA DIRECTA Y MENSAJERIA DIRIGIDA EN CITACIONES PMV3
 -- =========================================================================
-
-ALTER TABLE citation_recipients
-    ADD COLUMN justification_status VARCHAR(20) NULL,
-    ADD COLUMN justification_reviewed_at DATETIME NULL;
 
 ALTER TABLE citation_messages
     ADD COLUMN target_id_parent INT NULL,
@@ -21,8 +17,7 @@ DROP PROCEDURE IF EXISTS sp_respond_to_citation //
 CREATE PROCEDURE sp_respond_to_citation(
     IN p_id_citation INT,
     IN p_id_parent INT,
-    IN p_status VARCHAR(20),
-    IN p_reason TEXT
+    IN p_status VARCHAR(20)
 )
 BEGIN
     DECLARE v_global_status VARCHAR(20);
@@ -43,8 +38,6 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La citacion ya ha vencido.';
     ELSEIF p_status NOT IN ('accepted', 'rejected') THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estado de respuesta no es valido.';
-    ELSEIF p_status = 'rejected' AND (p_reason IS NULL OR TRIM(p_reason) = '') THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Debe registrar una razon para rechazar la citacion.';
     ELSE
         SELECT recipient_status INTO v_recipient_status
         FROM citation_recipients
@@ -72,9 +65,7 @@ BEGIN
         ELSE
             UPDATE citation_recipients
             SET recipient_status = p_status,
-                response_reason = CASE WHEN p_status = 'rejected' THEN TRIM(p_reason) ELSE NULL END,
-                justification_status = CASE WHEN p_status = 'rejected' THEN 'pending_review' ELSE NULL END,
-                justification_reviewed_at = NULL,
+                response_reason = NULL,
                 read_at = COALESCE(read_at, NOW()),
                 responded_at = NOW()
             WHERE id_citation = p_id_citation AND id_parent = p_id_parent;
@@ -85,7 +76,7 @@ BEGIN
                 'parent',
                 p_id_parent,
                 p_status,
-                JSON_OBJECT('previousStatus', v_recipient_status, 'newStatus', p_status, 'reason', p_reason)
+                JSON_OBJECT('previousStatus', v_recipient_status, 'newStatus', p_status)
             );
 
             SET v_event_id = LAST_INSERT_ID();

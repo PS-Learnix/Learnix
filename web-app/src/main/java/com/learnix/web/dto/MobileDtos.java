@@ -120,7 +120,7 @@ public class MobileDtos {
 
     public record CitationListResponse(List<CitationDto> items) {}
 
-    public record RespondCitationRequest(String status, String reason) {}
+    public record RespondCitationRequest(String status) {}
 
     public record RespondCitationResponse(CitationDto citation, Integer eventId) {}
 

@@ -190,7 +190,7 @@ public class MobileParentController {
             ));
         }
         try {
-            RespondCitationResponse response = mobileService.respondToCitation(citationId, parentId, request.status(), request.reason());
+            RespondCitationResponse response = mobileService.respondToCitation(citationId, parentId, request.status());
             if (response == null) {
                 return ResponseEntity.notFound().build();
             }
