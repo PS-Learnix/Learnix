@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 @Controller
 public class AuthController {
 
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthRepository authRepository;
@@ -70,9 +74,9 @@ public class AuthController {
             return null;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("security_event type=web_login_error class={}", e.getClass().getSimpleName());
 
-            model.addAttribute("globalError", e.getMessage());
+            model.addAttribute("globalError", "No se pudo iniciar sesion. Intente nuevamente.");
 
             return "login :: login-form";
         }

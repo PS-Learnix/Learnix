@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evidencias OWASP - Learnix</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        .sidebar-panel { background-color: white; border-radius: 2.5rem; width: 100px; height: calc(100vh - 2rem); }
+        .main-panel { background-color: white; border-radius: 2.5rem; height: calc(100vh - 2rem); overflow-y: auto; }
+        .nav-btn { width: 60px; height: 60px; border-radius: 1.2rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; text-decoration: none; }
+        .summary-card { border-radius: 1.5rem; border: 1px solid #e2e8f0; background: #f8fafc; }
+        .table thead th { background: #dbeafe; color: #1e3a8a; }
+    </style>
+</head>
+<body class="bg-light p-3">
+
+<div class="d-flex gap-3">
+    <aside th:replace="~{layout :: sidebar}"></aside>
+
+    <main class="main-panel flex-grow-1 p-4 shadow-sm border bg-white">
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h2 class="fw-black text-dark mb-1">Evidencias de seguridad</h2>
+                <p class="text-muted mb-0">Contramedidas QWASP/OWASP A01-A05 aplicadas y verificables.</p>
+            </div>
+            <a th:href="@{/security/evidences.json}" class="btn btn-outline-primary rounded-pill fw-bold" target="_blank">
+                Ver JSON
+            </a>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="summary-card p-3">
+                    <small class="text-muted text-uppercase fw-bold">Total evidencias</small>
+                    <div class="fs-3 fw-black text-primary" th:text="${#lists.size(evidences)}">5</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-card p-3">
+                    <small class="text-muted text-uppercase fw-bold">Aprobadas</small>
+                    <div class="fs-3 fw-black text-success" th:text="${approvedCount}">5</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-card p-3">
+                    <small class="text-muted text-uppercase fw-bold">Formato</small>
+                    <div class="fs-5 fw-black text-dark">Web + JSON</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive border rounded-4 overflow-hidden">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th>Contramedida aplicada</th>
+                    <th>Prueba realizada</th>
+                    <th>Resultado obtenido</th>
+                    <th>Estado</th>
+                    <th>Fecha y hora</th>
+                    <th>Modulo evaluado</th>
+                    <th>Observaciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="evidence : ${evidences}">
+                    <td class="fw-bold" th:text="${evidence.countermeasure}">A01</td>
+                    <td th:text="${evidence.testPerformed}">Prueba</td>
+                    <td th:text="${evidence.result}">Resultado</td>
+                    <td>
+                        <span class="badge rounded-pill"
+                              th:classappend="${evidence.status == 'APROBADO' ? 'bg-success' : 'bg-danger'}"
+                              th:text="${evidence.status}">APROBADO</span>
+                    </td>
+                    <td class="text-nowrap" th:text="${evidence.timestamp}">2026-06-30</td>
+                    <td th:text="${evidence.module}">web-app</td>
+                    <td th:text="${evidence.observations}">Obs</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+</body>
+</html>

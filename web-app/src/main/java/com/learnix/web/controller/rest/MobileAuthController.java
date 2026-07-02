@@ -2,11 +2,17 @@ package com.learnix.web.controller.rest;
 
 import com.learnix.web.dto.MobileDtos.LoginRequest;
 import com.learnix.web.dto.MobileDtos.LoginResponse;
+import com.learnix.web.security.SecurityInputValidator;
 import com.learnix.web.service.MobileService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
@@ -15,24 +21,38 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MobileAuthController {
 
+    private static final Logger log = LoggerFactory.getLogger(MobileAuthController.class);
+
     private final MobileService mobileService;
+    private final SecurityInputValidator inputValidator;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        System.out.println("--> MobileAuthController: login request for email=" + request.email());
-        if (request.email() == null || request.password() == null) {
-            System.out.println("<-- MobileAuthController: login bad request (missing fields)");
+        if (request == null || request.email() == null || request.password() == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Email and password are required"));
         }
-        
-        LoginResponse response = mobileService.login(request.email(), request.password());
+
+        String email = inputValidator.requireSafeText(request.email(), "email", 150);
+        String password = inputValidator.requireSafeText(request.password(), "password", 255);
+        log.info("security_event type=mobile_login_attempt email={}", maskEmail(email));
+
+        LoginResponse response = mobileService.login(email, password);
         if (response == null) {
-            System.out.println("<-- MobileAuthController: login unauthorized (invalid credentials)");
+            log.warn("security_event type=mobile_login_failed email={}", maskEmail(email));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Invalid credentials", "message", "Email o contraseña incorrectos"));
+                    .body(Map.of("error", "Invalid credentials", "message", "Email o password incorrectos"));
         }
-        
-        System.out.println("<-- MobileAuthController: login successful for parentId=" + (response.parent() != null ? response.parent().id() : null) + ", token=" + response.token());
+
+        log.info("security_event type=mobile_login_success parentId={}",
+                response.parent() != null ? response.parent().id() : null);
         return ResponseEntity.ok(response);
+    }
+
+    private String maskEmail(String email) {
+        int at = email.indexOf('@');
+        if (at <= 1) {
+            return "***";
+        }
+        return email.charAt(0) + "***" + email.substring(at);
     }
 }

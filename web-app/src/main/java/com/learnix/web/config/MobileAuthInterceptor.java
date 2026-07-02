@@ -21,7 +21,7 @@ public class MobileAuthInterceptor implements HandlerInterceptor {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Falta el token de autorización o es inválido\"}");
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Token de autorizacion requerido o invalido\"}");
             return false;
         }
 
@@ -31,10 +31,32 @@ public class MobileAuthInterceptor implements HandlerInterceptor {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Firma o formato del token no válidos\"}");
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Formato del token invalido\"}");
             return false;
         }
 
+        Integer parentId = extractParentId(token);
+        if (parentId == null) {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Formato del token invalido\"}");
+            return false;
+        }
+
+        request.setAttribute("authenticatedParentId", parentId);
         return true;
+    }
+
+    private Integer extractParentId(String token) {
+        try {
+            String[] parts = token.split("-");
+            if (parts.length >= 4) {
+                return Integer.parseInt(parts[3]);
+            }
+        } catch (NumberFormatException ignored) {
+            // La validacion fina se ejecuta en los controladores/servicios que usan el ID.
+        }
+        return null;
     }
 }

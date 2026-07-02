@@ -1,6 +1,8 @@
 package com.learnix.web.controller.rest;
 
 import com.learnix.web.dto.MobileDtos.*;
+import com.learnix.web.security.AccessControlService;
+import com.learnix.web.security.SecurityInputValidator;
 import com.learnix.web.service.MobileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -9,20 +11,31 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
+
 @RestController
 @RequestMapping("/api/mobile")
 @RequiredArgsConstructor
 public class MobileParentController {
 
     private final MobileService mobileService;
+    private final AccessControlService accessControlService;
+    private final SecurityInputValidator inputValidator;
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MobileParentController.class);
+
+    private static final Set<String> ALERT_STATUSES = Set.of("new", "read", "archived");
+    private static final Set<String> ANNOUNCEMENT_PRIORITIES = Set.of("alta", "media", "baja", "normal");
+    private static final Set<String> CITATION_STATUSES = Set.of("pending", "accepted", "rejected", "cancelled");
+    private static final Set<String> REPORT_FORMATS = Set.of("pdf", "excel", "xlsx", "xls");
 
     @GetMapping("/parents/{parentId}/students/{studentId}/dashboard")
     public ResponseEntity<DashboardMobileResponse> getDashboard(
             @PathVariable Integer parentId,
-            @PathVariable Integer studentId) {
-        System.out.println("--> MobileParentController: getDashboard called. parentId=" + parentId + ", studentId=" + studentId);
+            @PathVariable Integer studentId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        requireParentStudent(parentId, studentId, authenticatedParentId);
         DashboardMobileResponse dashboard = mobileService.getDashboard(parentId, studentId);
-        System.out.println("<-- MobileParentController: getDashboard returned studentId=" + (dashboard.student() != null ? dashboard.student().id() : null));
         return ResponseEntity.ok(dashboard);
     }
 
@@ -30,8 +43,15 @@ public class MobileParentController {
     public ResponseEntity<ProgressMobileResponse> getProgress(
             @PathVariable Integer studentId,
             @RequestParam(required = false) String term,
-            @RequestParam(required = false) Integer courseId) {
-        ProgressMobileResponse progress = mobileService.getProgress(studentId, term, courseId);
+            @RequestParam(required = false) Integer courseId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        accessControlService.requireParentStudentAccess(authenticatedParentId, inputValidator.requirePositive(studentId, "studentId"));
+        String safeTerm = inputValidator.optionalSafeText(term, "term", 20);
+        if (courseId != null) {
+            inputValidator.requirePositive(courseId, "courseId");
+        }
+        ProgressMobileResponse progress = mobileService.getProgress(studentId, safeTerm, courseId);
         return ResponseEntity.ok(progress);
     }
 
@@ -39,16 +59,13 @@ public class MobileParentController {
     public ResponseEntity<AttendanceDetailResponse> getAttendance(
             @PathVariable Integer studentId,
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
-        System.out.println("--> MobileParentController: getAttendance called. studentId=" + studentId + ", from=" + from + ", to=" + to);
-        AttendanceDetailResponse attendance = mobileService.getAttendance(studentId, from, to);
-        System.out.println("<-- MobileParentController: getAttendance returned days count=" + (attendance.days() != null ? attendance.days().size() : 0));
-        if (attendance.days() != null) {
-            for (int i = 0; i < Math.min(attendance.days().size(), 10); i++) {
-                var d = attendance.days().get(i);
-                System.out.println("    Day[" + i + "]: date=" + d.date() + ", status=" + d.status());
-            }
-        }
+            @RequestParam(required = false) String to,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        accessControlService.requireParentStudentAccess(authenticatedParentId, inputValidator.requirePositive(studentId, "studentId"));
+        String safeFrom = inputValidator.optionalSafeText(from, "from", 20);
+        String safeTo = inputValidator.optionalSafeText(to, "to", 20);
+        AttendanceDetailResponse attendance = mobileService.getAttendance(studentId, safeFrom, safeTo);
         return ResponseEntity.ok(attendance);
     }
 
@@ -56,8 +73,12 @@ public class MobileParentController {
     public ResponseEntity<RemindersResponse> getReminders(
             @PathVariable Integer parentId,
             @PathVariable Integer studentId,
-            @RequestParam(required = false) String today) {
-        RemindersResponse reminders = mobileService.getReminders(parentId, studentId, today);
+            @RequestParam(required = false) String today,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        requireParentStudent(parentId, studentId, authenticatedParentId);
+        String safeToday = inputValidator.optionalSafeText(today, "today", 20);
+        RemindersResponse reminders = mobileService.getReminders(parentId, studentId, safeToday);
         return ResponseEntity.ok(reminders);
     }
 
@@ -65,15 +86,22 @@ public class MobileParentController {
     public ResponseEntity<IncidentsResponse> getIncidents(
             @PathVariable Integer parentId,
             @PathVariable Integer studentId,
-            @RequestParam(required = false) String status) {
-        IncidentsResponse incidents = mobileService.getIncidents(parentId, studentId, status);
+            @RequestParam(required = false) String status,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        requireParentStudent(parentId, studentId, authenticatedParentId);
+        String safeStatus = inputValidator.optionalAllowedValue(status, "status", ALERT_STATUSES);
+        IncidentsResponse incidents = mobileService.getIncidents(parentId, studentId, safeStatus);
         return ResponseEntity.ok(incidents);
     }
 
     @GetMapping("/parents/{parentId}/students/{studentId}/profile-summary")
     public ResponseEntity<ProfileSummaryResponse> getProfileSummary(
             @PathVariable Integer parentId,
-            @PathVariable Integer studentId) {
+            @PathVariable Integer studentId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        requireParentStudent(parentId, studentId, authenticatedParentId);
         ProfileSummaryResponse profileSummary = mobileService.getProfileSummary(parentId, studentId);
         return ResponseEntity.ok(profileSummary);
     }
@@ -83,8 +111,14 @@ public class MobileParentController {
             @PathVariable Integer parentId,
             @RequestParam(required = false) String priority,
             @RequestParam(required = false) String sender,
-            @RequestParam(required = false) String status) {
-        AnnouncementsResponse announcements = mobileService.getAnnouncements(parentId, priority, sender, status);
+            @RequestParam(required = false) String status,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        accessControlService.requireSameParent(parentId, authenticatedParentId);
+        String safePriority = inputValidator.optionalAllowedValue(priority, "priority", ANNOUNCEMENT_PRIORITIES);
+        String safeSender = inputValidator.optionalSafeText(sender, "sender", 120);
+        String safeStatus = inputValidator.optionalAllowedValue(status, "status", ALERT_STATUSES);
+        AnnouncementsResponse announcements = mobileService.getAnnouncements(parentId, safePriority, safeSender, safeStatus);
         return ResponseEntity.ok(announcements);
     }
 
@@ -92,7 +126,11 @@ public class MobileParentController {
     public ResponseEntity<ReadAnnouncementResponse> markAnnouncementRead(
             @PathVariable Integer parentId,
             @PathVariable Integer announcementId,
-            @RequestBody ReadAnnouncementRequest request) {
+            @RequestBody ReadAnnouncementRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        accessControlService.requireSameParent(parentId, authenticatedParentId);
+        accessControlService.requireParentAnnouncementAccess(parentId, inputValidator.requirePositive(announcementId, "announcementId"));
         ReadAnnouncementResponse response = mobileService.markAnnouncementRead(parentId, announcementId);
         return ResponseEntity.ok(response);
     }
@@ -101,8 +139,13 @@ public class MobileParentController {
     public ResponseEntity<ReportsResponse> getReports(
             @PathVariable Integer studentId,
             @RequestParam(required = false) String type,
-            @RequestParam(required = false) String format) {
-        ReportsResponse reports = mobileService.getReports(studentId, type, format);
+            @RequestParam(required = false) String format,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        accessControlService.requireParentStudentAccess(authenticatedParentId, inputValidator.requirePositive(studentId, "studentId"));
+        String safeType = inputValidator.optionalSafeText(type, "type", 60);
+        String safeFormat = inputValidator.optionalAllowedValue(format, "format", REPORT_FORMATS);
+        ReportsResponse reports = mobileService.getReports(studentId, safeType, safeFormat);
         return ResponseEntity.ok(reports);
     }
 
@@ -110,13 +153,18 @@ public class MobileParentController {
     public ResponseEntity<byte[]> downloadReport(
             @PathVariable Integer studentId,
             @PathVariable Integer reportId,
-            @RequestParam String format) {
+            @RequestParam String format,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        accessControlService.requireParentStudentAccess(authenticatedParentId, inputValidator.requirePositive(studentId, "studentId"));
+        inputValidator.requirePositive(reportId, "reportId");
+        String safeFormat = inputValidator.optionalAllowedValue(format, "format", REPORT_FORMATS);
         
         // Provisional binary data mock
         byte[] dummyContent = "Contenido de reporte provicional - Learnix Mobile".getBytes();
         HttpHeaders headers = new HttpHeaders();
         
-        if ("excel".equalsIgnoreCase(format) || "xlsx".equalsIgnoreCase(format)) {
+        if ("excel".equalsIgnoreCase(safeFormat) || "xlsx".equalsIgnoreCase(safeFormat)) {
             headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
             headers.setContentDispositionFormData("attachment", "rendimiento-academico.xlsx");
         } else {
@@ -131,27 +179,19 @@ public class MobileParentController {
     @PatchMapping("/parents/{parentId}/preferences")
     public ResponseEntity<PreferencesResponse> updatePreferences(
             @PathVariable Integer parentId,
-            @RequestBody PreferencesRequest request) {
+            @RequestBody PreferencesRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        accessControlService.requireSameParent(parentId, authenticatedParentId);
+        if (request == null || request.darkMode() == null) {
+            throw new IllegalArgumentException("darkMode es obligatorio.");
+        }
         PreferencesResponse response = mobileService.updatePreferences(parentId, request.darkMode());
         return ResponseEntity.ok(response);
     }
 
     private Integer extractParentId(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return 1;
-        }
-        String token = authHeader.substring(7);
-        if (token.startsWith("jwt-token-parent-")) {
-            try {
-                String[] parts = token.split("-");
-                if (parts.length >= 4) {
-                    return Integer.parseInt(parts[3]);
-                }
-            } catch (NumberFormatException e) {
-                // ignore
-            }
-        }
-        return 1;
+        return authenticatedParent(authHeader);
     }
 
     @GetMapping("/parents/{parentId}/students/{studentId}/citations")
@@ -160,8 +200,14 @@ public class MobileParentController {
             @PathVariable Integer studentId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
-        CitationListResponse citations = mobileService.getParentStudentCitations(parentId, studentId, status, from, to);
+            @RequestParam(required = false) String to,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer authenticatedParentId = authenticatedParent(authHeader);
+        requireParentStudent(parentId, studentId, authenticatedParentId);
+        String safeStatus = inputValidator.optionalAllowedValue(status, "status", CITATION_STATUSES);
+        String safeFrom = inputValidator.optionalSafeText(from, "from", 20);
+        String safeTo = inputValidator.optionalSafeText(to, "to", 20);
+        CitationListResponse citations = mobileService.getParentStudentCitations(parentId, studentId, safeStatus, safeFrom, safeTo);
         return ResponseEntity.ok(citations);
     }
 
@@ -170,6 +216,7 @@ public class MobileParentController {
             @PathVariable Integer citationId,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         Integer parentId = extractParentId(authHeader);
+        accessControlService.requireParentCitationAccess(parentId, inputValidator.requirePositive(citationId, "citationId"));
         CitationDto citation = mobileService.getCitationDetail(citationId, parentId);
         if (citation == null) {
             return ResponseEntity.notFound().build();
@@ -183,23 +230,25 @@ public class MobileParentController {
             @RequestBody RespondCitationRequest request,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         Integer parentId = extractParentId(authHeader);
-        if (request.status() == null) {
+        accessControlService.requireParentCitationAccess(parentId, inputValidator.requirePositive(citationId, "citationId"));
+        if (request == null || request.status() == null) {
             return ResponseEntity.badRequest().body(java.util.Map.of(
                 "code", "VALIDATION_ERROR",
                 "message", "El estado es requerido."
             ));
         }
         try {
-            RespondCitationResponse response = mobileService.respondToCitation(citationId, parentId, request.status());
+            String safeStatus = inputValidator.optionalAllowedValue(request.status(), "status", Set.of("accepted", "rejected"));
+            RespondCitationResponse response = mobileService.respondToCitation(citationId, parentId, safeStatus);
             if (response == null) {
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.ok(response);
         } catch (org.springframework.jdbc.UncategorizedSQLException e) {
-            String msg = e.getSQLException() != null ? e.getSQLException().getMessage() : e.getMessage();
+            log.warn("security_event=mobile_citation_response_conflict citationId={} parentId={}", citationId, parentId);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(
                 "code", "CONFLICT",
-                "message", msg != null ? msg : "Error al procesar la respuesta a la citación."
+                "message", "No se pudo procesar la respuesta a la citacion."
             ));
         }
     }
@@ -211,7 +260,8 @@ public class MobileParentController {
             @RequestBody ConfirmCitationRequest request,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         Integer parentId = extractParentId(authHeader);
-        if (request.confirmed() == null || !request.confirmed()) {
+        accessControlService.requireParentCitationAccess(parentId, inputValidator.requirePositive(citationId, "citationId"));
+        if (request == null || request.confirmed() == null || !request.confirmed()) {
             return ResponseEntity.badRequest().body(java.util.Map.of(
                 "code", "VALIDATION_ERROR",
                 "message", "Debe confirmar con confirmed = true."
@@ -224,10 +274,10 @@ public class MobileParentController {
             }
             return ResponseEntity.ok(response);
         } catch (org.springframework.jdbc.UncategorizedSQLException e) {
-            String msg = e.getSQLException() != null ? e.getSQLException().getMessage() : e.getMessage();
+            log.warn("security_event=mobile_citation_confirm_conflict citationId={} parentId={}", citationId, parentId);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(
                 "code", "CONFLICT",
-                "message", msg != null ? msg : "Error al confirmar la citación."
+                "message", "No se pudo confirmar la citacion."
             ));
         }
     }
@@ -238,7 +288,9 @@ public class MobileParentController {
             @RequestParam(required = false) String after,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         Integer parentId = extractParentId(authHeader);
-        CitationMessagesResponse messages = mobileService.getCitationMessages(citationId, parentId, after);
+        accessControlService.requireParentCitationAccess(parentId, inputValidator.requirePositive(citationId, "citationId"));
+        String safeAfter = inputValidator.optionalSafeText(after, "after", 30);
+        CitationMessagesResponse messages = mobileService.getCitationMessages(citationId, parentId, safeAfter);
         return ResponseEntity.ok(messages);
     }
 
@@ -248,29 +300,48 @@ public class MobileParentController {
             @RequestBody SendCitationMessageRequest request,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         Integer parentId = extractParentId(authHeader);
-        if (request.body() == null || request.body().trim().isEmpty()) {
+        accessControlService.requireParentCitationAccess(parentId, inputValidator.requirePositive(citationId, "citationId"));
+        if (request == null) {
+            throw new IllegalArgumentException("body es obligatorio.");
+        }
+        String safeBody = inputValidator.requireSafeText(request.body(), "body", 1000);
+        if (safeBody.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(java.util.Map.of(
                 "code", "VALIDATION_ERROR",
-                "message", "El cuerpo del mensaje no puede estar vacío."
+                "message", "El cuerpo del mensaje no puede estar vacio."
             ));
         }
         try {
-            SendCitationMessageResponse response = mobileService.sendCitationMessage(citationId, request.body(), parentId);
+            SendCitationMessageResponse response = mobileService.sendCitationMessage(citationId, safeBody, parentId);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (org.springframework.jdbc.UncategorizedSQLException e) {
-            String msg = e.getSQLException() != null ? e.getSQLException().getMessage() : e.getMessage();
+            log.warn("security_event=mobile_citation_message_conflict citationId={} parentId={}", citationId, parentId);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(
                 "code", "CONFLICT",
-                "message", msg != null ? msg : "Error al enviar el mensaje."
+                "message", "No se pudo enviar el mensaje."
             ));
         }
     }
 
     @GetMapping("/citations/{citationId}/events")
     public ResponseEntity<CitationEventsResponse> getCitationEvents(
-            @PathVariable Integer citationId) {
+            @PathVariable Integer citationId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Integer parentId = extractParentId(authHeader);
+        accessControlService.requireParentCitationAccess(parentId, inputValidator.requirePositive(citationId, "citationId"));
         CitationEventsResponse events = mobileService.getCitationEvents(citationId);
         return ResponseEntity.ok(events);
+    }
+
+    private Integer authenticatedParent(String authHeader) {
+        return accessControlService.requireParentFromBearer(authHeader);
+    }
+
+    private void requireParentStudent(Integer parentId, Integer studentId, Integer authenticatedParentId) {
+        inputValidator.requirePositive(parentId, "parentId");
+        inputValidator.requirePositive(studentId, "studentId");
+        accessControlService.requireSameParent(parentId, authenticatedParentId);
+        accessControlService.requireParentStudentAccess(parentId, studentId);
     }
 }
 
