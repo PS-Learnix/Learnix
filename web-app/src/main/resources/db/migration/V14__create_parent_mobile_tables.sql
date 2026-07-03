@@ -106,35 +106,9 @@ CREATE TABLE IF NOT EXISTS parent_preferences (
 INSERT INTO parents (first_name, last_name, email, phone, password) VALUES
     ('Carlos', 'Pérez', 'padre@learnix.com', '+51 987654321', '123456');
 
-INSERT INTO parent_students (id_parent, id_student, relationship, is_primary) VALUES
-    ((SELECT id_parent FROM parents WHERE email = 'padre@learnix.com'), (SELECT id_student FROM students WHERE first_name = 'Juan' LIMIT 1), 'Padre', TRUE);
-
-UPDATE activities SET term = 'B1' WHERE MOD(id_activity, 2) = 0;
-UPDATE activities SET term = 'B2' WHERE MOD(id_activity, 2) = 1;
-
-INSERT INTO parent_alerts (id_student, id_parent, type, title, detail, severity, status, event_date) VALUES
-    ((SELECT id_student FROM students WHERE first_name = 'Juan' LIMIT 1),
-     (SELECT id_parent FROM parents WHERE email = 'padre@learnix.com'),
-     'citation', 'Citación con tutor', 'Reunión con el tutor de Juan Pérez el 15/06/2026 a las 10:00 AM.', 'info', 'new', '2026-06-15 10:00:00');
-
-INSERT INTO parent_alerts (id_student, id_parent, type, title, detail, severity, status) VALUES
-    ((SELECT id_student FROM students WHERE first_name = 'Juan' LIMIT 1),
-     (SELECT id_parent FROM parents WHERE email = 'padre@learnix.com'),
-     'incident', 'Incidencia disciplinaria', 'Observación registrada durante el recreo por conducta inadecuada.', 'critical', 'new');
-
-INSERT INTO announcements (title, body, sender_name, priority) VALUES
-    ('Reunión general de padres', 'Estimados padres de familia, se les convoca a la primera reunión general del año para conversar sobre las actividades escolares.', 'Dirección', 'Alta');
-
-INSERT INTO announcement_recipients (id_announcement, id_parent, status) VALUES
-    ((SELECT id_announcement FROM announcements WHERE title = 'Reunión general de padres' LIMIT 1),
-     (SELECT id_parent FROM parents WHERE email = 'padre@learnix.com'), 'new');
-
-INSERT INTO academic_reports (id_student, report_type, title, format, file_url) VALUES
-    ((SELECT id_student FROM students WHERE first_name = 'Juan' LIMIT 1), 'Rendimiento académico', 'Libreta de Notas B1', 'pdf', 'https://learnix.local/reports/1.pdf'),
-    ((SELECT id_student FROM students WHERE first_name = 'Juan' LIMIT 1), 'Rendimiento académico', 'Libreta de Notas B1', 'excel', 'https://learnix.local/reports/1.xlsx');
-
 INSERT INTO parent_preferences (id_parent, dark_mode) VALUES
     ((SELECT id_parent FROM parents WHERE email = 'padre@learnix.com'), FALSE);
+
 
 -- 4. Creación de Procedimientos Almacenados
 DELIMITER //

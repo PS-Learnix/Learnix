@@ -1,6 +1,9 @@
 spring:
   application:
     name: LearnixWeb
+  threads:
+    virtual:
+      enabled: true
   datasource:
     url: ${DATABASE_URL:jdbc:mysql://mysql:3306/learnix_database}
     username: ${MYSQL_USER:learnix_user}

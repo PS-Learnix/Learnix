@@ -54,15 +54,41 @@ public class AttendanceController {
         List<StudentResponse> students = attendanceService.getStudentsByPeriodSp(targetPeriodId);
         List<AttendanceRecord> attendances = attendanceService.getAttendancesByPeriodSp(targetPeriodId);
 
-// Generamos los días de la semana fijos
-        LocalDate monday = LocalDate.of(2026, 4, 27);
+// Generamos los días de la semana de forma dinámica basándonos en la fecha actual
+        LocalDate today = LocalDate.now();
         List<DayOfWeekDto> days = new ArrayList<>();
-        String[] names = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes"};
-        for (int i = 0; i < 5; i++) {
-            LocalDate currentDay = monday.plusDays(i);
-            days.add(new DayOfWeekDto(names[i], currentDay, currentDay.equals(LocalDate.now())));
+        String[] dayNames = {"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"};
+
+        int[] offsets = {-2, -1, 0, 1, 2};
+        for (int offset : offsets) {
+            LocalDate currentDay = today;
+            if (offset != 0) {
+                int step = offset > 0 ? 1 : -1;
+                int absoluteOffset = Math.abs(offset);
+                int count = 0;
+                while (count < absoluteOffset) {
+                    currentDay = currentDay.plusDays(step);
+                    if (currentDay.getDayOfWeek().getValue() < 6) { // Lunes a Viernes
+                        count++;
+                    }
+                }
+            }
+            int dayOfWeekValue = currentDay.getDayOfWeek().getValue() % 7;
+            String name = dayNames[dayOfWeekValue];
+            days.add(new DayOfWeekDto(name, currentDay, currentDay.equals(today)));
         }
         model.addAttribute("diasSemana", days);
+
+        // Formateamos el mes de inicio y fin para mostrarlo de forma destacada en la cabecera
+        LocalDate firstDay = days.get(0).date();
+        LocalDate lastDay = days.get(4).date();
+        String mesInicio = firstDay.getMonth().getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es"));
+        String mesFin = lastDay.getMonth().getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es"));
+        String año = String.valueOf(lastDay.getYear());
+        String mesLabel = mesInicio.equalsIgnoreCase(mesFin)
+                ? mesInicio.substring(0, 1).toUpperCase() + mesInicio.substring(1) + " " + año
+                : mesInicio.substring(0, 1).toUpperCase() + mesInicio.substring(1) + " / " + mesFin.substring(0, 1).toUpperCase() + mesFin.substring(1) + " " + año;
+        model.addAttribute("mesLabel", mesLabel);
 
 // Construimos las filas procesadas cruzando los datos en el Backend
         List<StudentAttendanceRow> matrixRows = new ArrayList<>();

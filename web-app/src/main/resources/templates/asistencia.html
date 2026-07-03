@@ -24,14 +24,20 @@
             <h2 class="fw-black text-dark m-0" th:text="'Asistencia - ' + ${selectedCourse.name} + ' (' + ${selectedCourse.section} + ')'">Asistencia</h2>
         </header>
 
+        <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+            <h4 class="m-0 fw-black text-primary text-uppercase tracking-wider" th:text="${mesLabel}">ABRIL / MAYO 2026</h4>
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill px-3 py-2 fw-bold">Semana de clases</span>
+        </div>
+
         <div class="table-responsive-panel bg-white shadow-sm">
             <table class="table table-bordered m-0 align-middle text-center" style="border-collapse: separate; border-spacing: 0;">
                 <thead class="table-light text-secondary">
                 <tr>
                     <th class="sticky-col p-3 text-start bg-light" style="width: 25%;">Estudiante</th>
-                    <th th:each="dia : ${diasSemana}" class="p-2" th:classappend="${dia.isToday} ? 'opacity-100' : 'opacity-50'">
-                        <div class="small fw-bold text-uppercase tracking-wider" th:text="${dia.name}">Lunes</div>
-                        <div class="fs-4 fw-black text-dark" th:text="${#temporals.format(dia.date, 'dd')}">27</div>
+                    <th th:each="dia : ${diasSemana}" class="p-2 pt-3" th:classappend="${dia.isToday} ? 'table-primary border-primary' : 'opacity-75'">
+                        <span th:if="${dia.isToday}" class="badge rounded-pill bg-primary mb-1 d-inline-block" style="font-size: 0.65rem; padding: 0.35em 0.65em;">HOY</span>
+                        <div class="small fw-bold text-uppercase tracking-wider" th:classappend="${dia.isToday} ? 'text-primary' : ''" th:text="${dia.name}">Lunes</div>
+                        <div class="fs-4 fw-black" th:classappend="${dia.isToday} ? 'text-primary' : 'text-dark'" th:text="${#temporals.format(dia.date, 'dd')}">27</div>
                     </th>
                 </tr>
                 </thead>
@@ -41,7 +47,7 @@
                     <td class="sticky-col p-3 text-start fw-bold text-secondary"
                         th:text="${row.lastName} + ' ' + ${row.firstName}">Alumno</td>
 
-                    <td th:each="dia, diaStat : ${diasSemana}" class="p-2" th:classappend="${dia.isToday} ? 'bg-primary bg-opacity-10'">
+                    <td th:each="dia, diaStat : ${diasSemana}" class="p-2" th:classappend="${dia.isToday} ? 'bg-primary bg-opacity-10 border-start border-end border-primary'">
 
                         <form th:fragment="attendance-btn"
                               hx-post="/asistencia/toggle"

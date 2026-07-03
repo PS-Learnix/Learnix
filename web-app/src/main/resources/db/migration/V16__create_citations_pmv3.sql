@@ -418,19 +418,3 @@ BEGIN
 END //
 
 DELIMITER ;
-
--- 4. Semilla de datos para pruebas
--- Citación individual pendiente
-INSERT INTO virtual_citations (id_student, id_teacher, created_by_user_id, title, detail, scheduled_at, mode, meeting_url, scope)
-VALUES (1, 1, 1, 'Citacion virtual con tutoria', 'Revision de avance academico y acuerdos de apoyo en casa.', DATE_ADD(NOW(), INTERVAL 9 DAY), 'virtual', 'https://meet.learnix.edu/cita-101', 'individual');
-
-SET @cit_id = LAST_INSERT_ID();
-
-INSERT INTO citation_recipients (id_citation, id_parent, id_student, recipient_status)
-VALUES (@cit_id, 1, 1, 'pending');
-
-INSERT INTO citation_messages (id_citation, sender_type, sender_id, body, sent_at, read_at)
-VALUES (@cit_id, 'user', 1, 'Buenas tardes, solicito una reunion para revisar el avance.', DATE_SUB(NOW(), INTERVAL 1 HOUR), NULL);
-
-INSERT INTO citation_events (id_citation, actor_type, actor_id, event_type, payload)
-VALUES (@cit_id, 'user', 1, 'created', JSON_OBJECT('newStatus', 'pending'));
