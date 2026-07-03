@@ -15,11 +15,7 @@ class HttpParentRepository implements ParentRepository {
 
   static String get _defaultBaseUrl {
     if (_configuredBaseUrl.isNotEmpty) return _configuredBaseUrl;
-    if (kIsWeb) return 'http://localhost:8080';
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8080';
-    }
-    return 'http://localhost:8080';
+    return 'https://learnix.yoshua-cloud.dedyn.io';
   }
 
   final String baseUrl;
