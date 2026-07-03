@@ -153,7 +153,33 @@ public class SecurityEvidenceService {
     }
 
     private boolean exists(String relativePath) {
-        return Files.exists(resolve(relativePath));
+        Path path = resolve(relativePath);
+        if (Files.exists(path)) {
+            return true;
+        }
+        String normalizedPath = relativePath.replace("\\", "/");
+        if (normalizedPath.startsWith("../")) {
+            normalizedPath = normalizedPath.substring(3);
+        }
+        return getClass().getClassLoader().getResource("evidences/" + normalizedPath) != null;
+    }
+
+    private String readFromClasspath(String relativePath) {
+        String normalizedPath = relativePath.replace("\\", "/");
+        if (normalizedPath.startsWith("../")) {
+            normalizedPath = normalizedPath.substring(3);
+        }
+        String resourcePath = "evidences/" + normalizedPath;
+        try (java.io.InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+            if (is == null) {
+                return null;
+            }
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8))) {
+                return reader.lines().collect(java.util.stream.Collectors.joining("\n"));
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private String present(boolean value) {
@@ -189,7 +215,8 @@ public class SecurityEvidenceService {
     private boolean sourceContains(String relativePath, String needle) {
         Path path = resolve(relativePath);
         if (!Files.exists(path)) {
-            return false;
+            String content = readFromClasspath(relativePath);
+            return content != null && content.contains(needle);
         }
         try {
             return Files.readString(path).contains(needle);
