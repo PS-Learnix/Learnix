@@ -33,6 +33,7 @@
             <table class="table table-bordered m-0 align-middle text-center" style="border-collapse: separate; border-spacing: 0;">
                 <thead class="table-light text-secondary">
                 <tr>
+                    <th class="p-3 text-center bg-light text-secondary" style="width: 5%;">Nº</th>
                     <th class="sticky-col p-3 text-start bg-light" style="width: 25%;">Estudiante</th>
                     <th th:each="dia : ${diasSemana}" class="p-2 pt-3" th:classappend="${dia.isToday} ? 'table-primary border-primary' : 'opacity-75'">
                         <span th:if="${dia.isToday}" class="badge rounded-pill bg-primary mb-1 d-inline-block" style="font-size: 0.65rem; padding: 0.35em 0.65em;">HOY</span>
@@ -42,8 +43,8 @@
                 </tr>
                 </thead>
                 <tbody class="divide-y-2">
-                <tr th:each="row : ${matrixRows}" class="hover-actions">
-
+                <tr th:each="row, rowStat : ${matrixRows}" class="hover-actions">
+                    <td class="p-3 text-center fw-bold text-muted" th:text="${rowStat.count}">1</td>
                     <td class="sticky-col p-3 text-start fw-bold text-secondary"
                         th:text="${row.lastName} + ' ' + ${row.firstName}">Alumno</td>
 

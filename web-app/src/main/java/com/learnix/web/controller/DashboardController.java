@@ -56,6 +56,7 @@ public class DashboardController {
 
         DashboardStatsResponse stats = dashboardService.getDashboardStats(selectedCourse.idCoursePeriod());
         model.addAttribute("stats", stats);
+        model.addAttribute("activePeriodName", dashboardService.getActivePeriodName());
 
         if(hxRequest != null) return "views/dashboard/index :: #dashboard-content";
 

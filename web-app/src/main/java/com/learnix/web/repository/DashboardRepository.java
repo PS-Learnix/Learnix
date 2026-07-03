@@ -89,4 +89,14 @@ public class DashboardRepository extends BaseProcedureRepository{
         );
     }
 
+    public String getActivePeriodName() {
+        try {
+            return jdbcTemplate.queryForObject(
+                    "SELECT name FROM periods WHERE is_closed = FALSE LIMIT 1",
+                    String.class
+            );
+        } catch (Exception ex) {
+            return "Periodo Escolar";
+        }
+    }
 }

@@ -45,4 +45,8 @@ public class DashboardService {
 
         return courseList.getFirst();
     }
+
+    public String getActivePeriodName() {
+        return dashboardRepository.getActivePeriodName();
+    }
 }
