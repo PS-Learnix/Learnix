@@ -48,6 +48,19 @@ public class ActivityController {
         model.addAttribute("actividades", activityService.getActivitiesByPeriodSp(targetPeriodId));
         model.addAttribute("estudiantes", attendanceService.getStudentsByPeriodSp(targetPeriodId));
 
+        // Calculamos el periodo/trimestre dinámicamente según el mes actual
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int month = today.getMonthValue();
+        String currentPeriodName;
+        if (month >= 3 && month <= 5) {
+            currentPeriodName = "1er Trimestre";
+        } else if (month >= 6 && month <= 8) {
+            currentPeriodName = "2do Trimestre";
+        } else {
+            currentPeriodName = "3er Trimestre";
+        }
+        model.addAttribute("currentPeriodName", currentPeriodName);
+
         return "actividades";
     }
 
