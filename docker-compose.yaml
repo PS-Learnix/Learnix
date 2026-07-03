@@ -30,6 +30,8 @@ services:
       - DATABASE_URL=${DATABASE_URL:-jdbc:mysql://mysql:3306/learnix_database}
       - MYSQL_USER=${MYSQL_USER:-learnix_user}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-learnix_password}
+    volumes:
+      - .:/learnix:ro
     depends_on:
       mysql:
         condition: service_healthy

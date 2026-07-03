@@ -227,6 +227,10 @@ public class SecurityEvidenceService {
     }
 
     private Path resolve(String relativePath) {
+        Path learnixPath = Path.of("/learnix").resolve(relativePath).normalize();
+        if (Files.exists(learnixPath)) {
+            return learnixPath;
+        }
         Path base = Path.of(System.getProperty("user.dir")).normalize();
         Path direct = base.resolve(relativePath).normalize();
         if (Files.exists(direct)) {
